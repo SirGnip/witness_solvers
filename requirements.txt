@@ -1,0 +1,4 @@
+keyboard == 0.13
+pillow == 10.2
+pytest == 8
+
