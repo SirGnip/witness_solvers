@@ -4,7 +4,7 @@ GridEdges = dict[PointPair, bool]
 
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
-DOT, HORIZ, VERT = '+-|'
+INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = '+X-X|'
 
 
 def pt_add(a: Point, b: Point) -> Point:
@@ -44,22 +44,20 @@ class Grid:
         for y in range(self.height):
             for x in range(self.width):
                 # intersection
-                txt.write(x * 2, y * 2, DOT)
+                txt.write(x * 2, y * 2, INTERSECT)
 
                 # right
                 pt = (x, y)
                 right = pt_add(pt, RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
-                    if pair in self.edges:
-                        txt.write(x * 2 + 1, y * 2, HORIZ)
+                    txt.write(x * 2 + 1, y * 2, HORIZ_ON if self.edges.get(pair, False) else HORIZ_OFF)
 
                 # up
                 up = pt_add(pt, UP)
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
-                    if pair in self.edges:
-                        txt.write(x * 2, y * 2 + 1, VERT)
+                    txt.write(x * 2, y * 2 + 1, VERT_ON if self.edges.get(pair, False) else VERT_OFF)
 
         return str(txt)
 
@@ -80,6 +78,9 @@ class TextGrid:
 
 def main():
     grid = Grid(3, 3)
+    a, b, c = (1, 1), (2, 1), (2, 2)
+    grid.edges[frozenset((a, b))] = True
+    grid.edges[frozenset((b, c))] = True
     print(grid)
 
 
