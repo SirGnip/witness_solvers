@@ -4,7 +4,7 @@ GridEdges = dict[PointPair, bool]
 
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
-INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = '+X-X|'
+START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^+X-X|'
 
 
 def pt_add(a: Point, b: Point) -> Point:
@@ -15,6 +15,8 @@ class Grid:
     def __init__(self, width, height):
         self.width: int = width
         self.height: int = height
+        self.start: Point = (0, 0)
+        self.end: Point = (width - 1, height - 1)
         self.edges: GridEdges = {}
 
         for y in range(height):
@@ -43,11 +45,17 @@ class Grid:
 
         for y in range(self.height):
             for x in range(self.width):
+                pt = (x, y)
+
                 # intersection
-                txt.write(x * 2, y * 2, INTERSECT)
+                char = INTERSECT
+                if pt == self.start:
+                    char = START
+                if pt == self.end:
+                    char = END
+                txt.write(x * 2, y * 2, char)
 
                 # right
-                pt = (x, y)
                 right = pt_add(pt, RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))

@@ -4,11 +4,11 @@ def test_make_grid():
     grid = puzzle.Grid(3, 3)
     txt = str(grid)
     assert txt == '''
-+-+-+
++-+-^
 | | |
 +-+-+
 | | |
-+-+-+
+O-+-+
     '''.strip()
 
 def test_make_grid_path():
@@ -18,9 +18,9 @@ def test_make_grid_path():
     grid.edges[frozenset((b, c))] = True
     txt = str(grid)
     assert txt == '''
-+-+-+
++-+-^
 | | X
 +-+X+
 | | |
-+-+-+
+O-+-+
     '''.strip()
