@@ -26,6 +26,7 @@ class Grid:
         self.end: Point = (width - 1, height - 1)
         self.edges: GridEdges = {}
         self.path: Path = [self.start]
+        self._overlay: tuple[tuple[str]] | None = None
 
         for y in range(height):
             for x in range(width):
@@ -42,6 +43,10 @@ class Grid:
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
                     self.edges[pair] = False
+
+    def set_overlay(self, overlay: tuple[tuple[str]]) -> None:
+        '''2D tuple of ints representing the values in the  is expected to have 0,0 at bottom left. A "reversed" on a tuple literal will work.'''
+        self._overlay = overlay
 
     def _contains(self, pt: Point) -> bool:
         '''Test if grid contains given point'''
@@ -102,6 +107,13 @@ class Grid:
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
                     txt.write(x * 2, y * 2 + 1, VERT_ON if self.edges.get(pair, False) else VERT_OFF)
+
+                if self._overlay is not None:
+                    if x < self.width - 1 and y < self.height - 1:
+                        char = self._overlay[y][x]
+                        if char != '':
+                            txt.write(x * 2 + 1, y * 2 + 1, char)
+
         return str(txt) + f'\nPath: {self.path}'
 
 

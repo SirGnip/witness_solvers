@@ -47,3 +47,19 @@ def test_traversal():
     assert len(grids) == 17
 
 
+def test_overlay():
+    over = tuple(reversed((
+        (' ', '1'),
+        ('2', '3')
+    )))
+    grid = puzzle.Grid(3, 3)
+    grid.set_overlay(over)
+    txt = str(grid)
+    assert txt == '''
++-+-^
+| |1|
++-+-+
+|2|3|
+O-+-+
+Path: [(0, 0)]
+        '''.strip()
