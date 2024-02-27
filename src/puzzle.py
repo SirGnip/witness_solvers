@@ -1,9 +1,15 @@
+import copy
+
 Point = tuple[int, int]
 PointPair = frozenset[Point]
 GridEdges = dict[PointPair, bool]
+Path = list[Point]
 
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
+LEFT: Point = (-1, 0)
+DOWN: Point = (0, -1)
+
 START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^+X-X|'
 
 
@@ -18,6 +24,7 @@ class Grid:
         self.start: Point = (0, 0)
         self.end: Point = (width - 1, height - 1)
         self.edges: GridEdges = {}
+        self.path: Path = [self.start]
 
         for y in range(height):
             for x in range(width):
@@ -39,6 +46,25 @@ class Grid:
         '''Test if grid contains given point'''
         x, y = pt
         return 0 <= x < self.width and 0 <= y < self.height
+
+    def valid_moves(self, pt: Point) -> list[Point]:
+        '''Return all valid points around the given point that are valid moves
+        Path is blocked by points that fall outside of the board and links that are already visited.'''
+        results = []
+        for d in (RIGHT, UP, LEFT, DOWN):
+            hop = pt_add(pt, d)
+            if self._contains(hop):
+                pair = frozenset((pt, hop))
+                if pair in self.edges and self.edges[pair] == False:
+                    results.append(hop)
+        return results
+
+    def add_link(self, start: Point, hop: Point) -> None:
+        pair: PointPair = frozenset((start, hop))
+        if pair not in self.edges:
+            raise Exception(f'Edge was expected to exist but did not: {pair}')
+        self.edges[pair] = True
+        self.path.append(hop)
 
     def __str__(self) -> str:
         txt = TextGrid((self.width-1) * 2 + 1, (self.height-1) * 2 + 1)
@@ -66,8 +92,7 @@ class Grid:
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
                     txt.write(x * 2, y * 2 + 1, VERT_ON if self.edges.get(pair, False) else VERT_OFF)
-
-        return str(txt)
+        return str(txt) + f'\nPath: {self.path}'
 
 
 class TextGrid:
@@ -84,12 +109,43 @@ class TextGrid:
         self.grid[y][x] = char
 
 
-def main():
+def traverse(given_grid: Grid, cur_point: Point) -> list[Grid]:
+    '''Given a grid, return a list of grids that contain paths that start/end at the start/end'''
+    results: list[Grid] = []
+    for pt in given_grid.valid_moves(cur_point):
+        g = copy.deepcopy(given_grid)
+        g.add_link(cur_point, pt)  # creates new link and adds to grid.path
+        results.append(g)
+        results.extend(traverse(g, pt))
+    return results
+
+
+def temp_test_1():
     grid = Grid(3, 3)
     a, b, c = (1, 1), (2, 1), (2, 2)
     grid.edges[frozenset((a, b))] = True
     grid.edges[frozenset((b, c))] = True
     print(grid)
+
+
+def temp_traversal_demo():
+    grid = Grid(4, 4)
+    print()
+    # print(grid)
+    results = traverse(grid, grid.start)
+    # for r in results:
+    #     print()
+    #     print(r)
+    end_to_end = [r for r in results if r.path[-1] == r.end]
+    for r in end_to_end[200:220]:
+        print()
+        print(r)
+    print(f'counts {len(results)} {len(end_to_end)}')
+
+
+def main():
+    # temp_test_1()
+    temp_traversal_demo()
 
 
 if __name__ == '__main__':

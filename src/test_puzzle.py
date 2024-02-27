@@ -10,6 +10,7 @@ def test_make_grid():
 +-+-+
 | | |
 O-+-+
+Path: [(0, 0)]
     '''.strip()
 
 def test_make_grid_path():
@@ -24,6 +25,7 @@ def test_make_grid_path():
 +-+X+
 | | |
 O-+-+
+Path: [(0, 0)]
     '''.strip()
 
 def test_grid_deepcopy():
@@ -37,4 +39,11 @@ def test_grid_deepcopy():
 
     assert len([v for k, v in grid.edges.items() if v]) == 2
     assert len([v for k, v in grid2.edges.items() if v]) == 3
+
+
+def test_traversal():
+    grid = puzzle.Grid(2, 3)
+    grids = puzzle.traverse(grid, grid.start)
+    assert len(grids) == 25
+
 
