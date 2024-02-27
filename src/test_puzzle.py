@@ -44,6 +44,6 @@ def test_grid_deepcopy():
 def test_traversal():
     grid = puzzle.Grid(2, 3)
     grids = puzzle.traverse(grid, grid.start)
-    assert len(grids) == 25
+    assert len(grids) == 17
 
 

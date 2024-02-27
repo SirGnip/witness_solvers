@@ -1,3 +1,4 @@
+import datetime
 import copy
 
 Point = tuple[int, int]
@@ -51,11 +52,20 @@ class Grid:
         '''Return all valid points around the given point that are valid moves
         Path is blocked by points that fall outside of the board and links that are already visited.'''
         results = []
+
+        # Avoid intersections that lines have already traveled through (algorithm was traveling through "corners"
+        # that were already drawn in.
+        points = set()
+        pairs = [pair for pair, state in self.edges.items() if state == True]
+        for a, b in pairs:
+            points.add(a)
+            points.add(b)
+
         for d in (RIGHT, UP, LEFT, DOWN):
             hop = pt_add(pt, d)
             if self._contains(hop):
                 pair = frozenset((pt, hop))
-                if pair in self.edges and self.edges[pair] == False:
+                if pair in self.edges and self.edges[pair] == False and hop not in points:
                     results.append(hop)
         return results
 
@@ -136,16 +146,21 @@ def temp_traversal_demo():
     # for r in results:
     #     print()
     #     print(r)
+    print('end to end ----------------')
     end_to_end = [r for r in results if r.path[-1] == r.end]
-    for r in end_to_end[200:220]:
-        print()
-        print(r)
+    # for r in end_to_end[:30]:
+    #     print()
+    #     print(r)
     print(f'counts {len(results)} {len(end_to_end)}')
 
 
 def main():
     # temp_test_1()
+
+    s = datetime.datetime.now()
     temp_traversal_demo()
+    e = datetime.datetime.now()
+    print(f'{e - s} ({s} -> {e})')
 
 
 if __name__ == '__main__':
