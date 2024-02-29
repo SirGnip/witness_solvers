@@ -43,17 +43,17 @@ def test_grid_deepcopy():
 
 def test_traversal():
     grid = puzzle.Grid(2, 3)
-    grids = puzzle.traverse(grid, grid.start)
+    grids = puzzle.find_all_paths(grid, grid.start)
     assert len(grids) == 17
 
 
 def test_overlay():
+    grid = puzzle.Grid(3, 3)
     over = tuple(reversed((
         (' ', '1'),
         ('2', '3')
     )))
-    grid = puzzle.Grid(3, 3)
-    grid.set_overlay(over)
+    grid.set_cells(over)
     txt = str(grid)
     assert txt == '''
 +-+-^
@@ -63,3 +63,24 @@ def test_overlay():
 O-+-+
 Path: [(0, 0)]
         '''.strip()
+
+
+def test_tri_puzzle():
+    grid = puzzle.Grid(4, 4)
+    grids_with_paths = puzzle.find_all_paths(grid, grid.start)
+    grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+    cells = tuple(reversed((
+        ('3', ' ', ' '),
+        (' ', ' ', '2'),
+        (' ', ' ', '1'),
+    )))
+
+    ans = []
+    for g in grids_with_complete_paths:
+        g.set_cells(cells)
+        if puzzle.is_solved_tri_puzzle(g):
+            ans.append(g)
+
+    assert len(grids_with_paths) == 2110
+    assert len(grids_with_complete_paths) == 184
+    assert len(ans) == 2
