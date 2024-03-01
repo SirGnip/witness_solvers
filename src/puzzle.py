@@ -8,13 +8,17 @@ Path = list[Point]
 Region = set[Point]
 Regions = list[Region]
 
-
+DEBUG = False
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
 LEFT: Point = (-1, 0)
 DOWN: Point = (0, -1)
 
-START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^+X-X|'
+
+if DEBUG:
+    START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^+X-X|'  # good for debugging grid/path
+else:
+    START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^ ━ ┃ '  # good for showing solutions
 
 
 def pt_add(a: Point, b: Point) -> Point:
