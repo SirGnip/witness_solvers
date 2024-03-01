@@ -78,7 +78,7 @@ def test_tri_puzzle():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if puzzle.is_solved_tri_puzzle(g):
+        if g.is_solved_tri_puzzle():
             ans.append(g)
 
     assert len(grids_with_paths) == 2110
@@ -139,7 +139,7 @@ def test_region_separator_large():
     # for r in regions.regions:
     #     print(r)
 
-def test_region_puzzle():
+def test_region_puzzle_4x4_2_color():
     grid = puzzle.Grid(4, 4)
     grids_with_paths = puzzle.find_all_paths(grid, grid.start)
     grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
@@ -152,7 +152,7 @@ def test_region_puzzle():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if puzzle.is_solved_region_puzzle(g):
+        if g.is_solved_region_puzzle():
             ans.append(g)
 
     # for a in ans:
@@ -163,7 +163,7 @@ def test_region_puzzle():
     assert len(grids_with_complete_paths) == 184
     assert len(ans) == 1
 
-def test_region_puzzle_real():
+def test_region_puzzle_5x5_3_color():
     grid = puzzle.Grid(5, 5)
     grids_with_paths = puzzle.find_all_paths(grid, grid.start)
     grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
@@ -177,11 +177,13 @@ def test_region_puzzle_real():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if puzzle.is_solved_region_puzzle(g):
+        if g.is_solved_region_puzzle():
             ans.append(g)
 
     # for a in ans:
     #     print('-' * 40)
     #     print(a)
 
-    assert len(ans) > 0
+    assert len(grids_with_paths) == 153744
+    assert len(grids_with_complete_paths) == 8512
+    assert len(ans) == 14

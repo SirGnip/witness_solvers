@@ -192,6 +192,30 @@ class Grid:
         }
         return direction_map[direction]
 
+    def is_solved_tri_puzzle(self) -> bool:
+        '''Return True if the given Grid, cells and path are a solved Triangle puzzle'''
+        for y in range(self.height - 1):
+            for x in range(self.width - 1):
+                cell = self.cells[y][x]
+                if cell != ' ':
+                    count = int(cell)
+                    touching = self.touching_edges(x, y)
+                    if count != touching:
+                        # print('touch', x, y, val, touching)
+                        return False
+        return True
+
+    def is_solved_region_puzzle(self) -> bool:
+        '''Return True if the given Grid, cells and path are a solved Region puzzle'''
+        for region in self.get_regions_wrapper().regions:
+            # get cell values for each point in region
+            colors = [self.cells[point[1]][point[0]] for point in region]
+            # strip out whitespace and count number of unique colors
+            colors = {c for c in colors if c.strip() != ''}  # use set for uniqueness
+            # if any region has > 1 unique cell color, fail solution
+            if len(colors) > 1:
+                return False
+        return True
 
     def __str__(self) -> str:
         txt = TextGrid((self.width-1) * 2 + 1, (self.height-1) * 2 + 1)
@@ -254,7 +278,7 @@ def find_all_paths(given_grid: Grid, cur_point: Point) -> list[Grid]:
     return results
 
 
-def temp_test_1():
+def demo_simple():
     grid = Grid(3, 3)
     a, b, c = (1, 1), (2, 1), (2, 2)
     grid.edges[frozenset((a, b))] = True
@@ -262,7 +286,7 @@ def temp_test_1():
     print(grid)
 
 
-def temp_traversal_demo():
+def demo_traversal():
     grid = Grid(4, 4)
     print()
     # print(grid)
@@ -278,33 +302,7 @@ def temp_traversal_demo():
     print(f'counts {len(results)} {len(end_to_end)}')
 
 
-def is_solved_tri_puzzle(g: Grid) -> bool:
-    for y in range(g.height - 1):
-        for x in range(g.width - 1):
-            cell = g.cells[y][x]
-            if cell != ' ':
-                count = int(cell)
-                touching = g.touching_edges(x, y)
-                if count != touching:
-                    # print('touch', x, y, val, touching)
-                    return False
-    return True
-
-
-def is_solved_region_puzzle(g: Grid) -> bool:
-    '''Solve the region grid puzzles'''
-    for region in g.get_regions_wrapper().regions:
-        # get cell values for each point in region
-        colors = [g.cells[point[1]][point[0]] for point in region]
-        # strip out whitespace and count number of unique colors
-        colors = {c for c in colors if c.strip() != ''}  # use set for uniqueness
-        # if any region has > 1 unique cell color, fail solution
-        if len(colors) > 1:
-            return False
-    return True
-
-
-def dummy_tri():
+def demo_tri():
     grid = Grid(3, 3)
     over = tuple(reversed((
         (' ', ' '),
@@ -319,7 +317,7 @@ def dummy_tri():
     end_to_end = [r for r in results if r.path[-1] == r.end]
 
     for idx, g in enumerate(end_to_end):
-        if is_solved_tri_puzzle(g):
+        if g.is_solved_tri_puzzle():
             ans.append(g)
 
     print('answers', '-' * 20)
@@ -329,7 +327,7 @@ def dummy_tri():
     print('counts', len(results), len(end_to_end), len(ans))
 
 
-def dummy_solve_tri_puzzles():
+def demo_solve_tri_puzzles():
     '''precalculate grids and solve multiple puzzles, starting with the same grid (testing the optimization)'''
     test_cells = []
     test_cells.append(tuple(reversed((
@@ -363,7 +361,7 @@ def dummy_solve_tri_puzzles():
         ans = []
         for g in grids_with_complete_paths:
             g.set_cells(cells)
-            if is_solved_tri_puzzle(g):
+            if g.is_solved_tri_puzzle():
                 ans.append(g)
                 print(g)
         print('counts', len(grids_with_paths), len(grids_with_complete_paths), len(ans))
@@ -372,10 +370,10 @@ def dummy_solve_tri_puzzles():
 def main():
     s = datetime.datetime.now()
 
-    # temp_test_1()
-    # temp_traversal_demo()
-    # dummy_tri()
-    dummy_solve_tri_puzzles()
+    demo_simple()
+    demo_traversal()
+    demo_tri()
+    # dummy_solve_tri_puzzles()
 
     e = datetime.datetime.now()
     print(f'{e - s} ({s} -> {e})')
