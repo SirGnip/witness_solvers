@@ -1,10 +1,13 @@
 import datetime
 import copy
 
-Point = tuple[int, int]
+Point = tuple[int, int]  # Note: This type is used to identify vertexes in the grid AND cells between the grid lines.
 PointPair = frozenset[Point]
 GridEdges = dict[PointPair, bool]
 Path = list[Point]
+Region = set[Point]
+Regions = list[Region]
+
 
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
@@ -18,6 +21,24 @@ def pt_add(a: Point, b: Point) -> Point:
     return a[0] + b[0], a[1] + b[1]
 
 
+def pt_in_bounds(p: Point, x_bound: int, y_bound: int) -> bool:
+    '''Is given point in bounds. x_bound and y_bound are EXCLUSIVE'''
+    x, y = p
+    return 0 <= x < x_bound and 0 <= y < y_bound
+
+
+class RegionsWrapper:
+    def __init__(self):
+        self.regions: Regions = []
+
+    def get_points(self):
+        points = []
+        for region in self.regions:
+            for point in region:
+                points.append(point)
+        return points
+
+
 class Grid:
     def __init__(self, width, height):
         self.width: int = width
@@ -26,7 +47,7 @@ class Grid:
         self.end: Point = (width - 1, height - 1)
         self.edges: GridEdges = {}
         self.path: Path = [self.start]
-        self._cells: tuple[tuple[str]] | None = None
+        self.cells: tuple[tuple[str]] | None = None
 
         for y in range(height):
             for x in range(width):
@@ -46,7 +67,7 @@ class Grid:
 
     def set_cells(self, cells: tuple[tuple[str, ...]]) -> None:
         '''2D tuple of ints representing the values in the  is expected to have 0,0 at bottom left. A "reversed" on a tuple literal will work.'''
-        self._cells = cells
+        self.cells = cells
 
     def _contains(self, pt: Point) -> bool:
         '''Test if grid contains given point'''
@@ -81,6 +102,13 @@ class Grid:
         self.edges[pair] = True
         self.path.append(hop)
 
+    def append_to_path(self, hop: Point) -> None:
+        pair: PointPair = frozenset((self.path[-1], hop))
+        if pair not in self.edges:
+            raise Exception(f'Edge was expected to exist but did not: {pair}')
+        self.edges[pair] = True
+        self.path.append(hop)
+
     def touching_edges(self, x: int, y: int) -> int:
         '''given x,y of an overlay cell, return the number of active edges that are adjacent'''
         assert 0 <= x < self.width - 1
@@ -97,6 +125,73 @@ class Grid:
         )
         activated_edges = [e for e in edges if self.edges.get(e, False) == True]
         return len(activated_edges)
+
+    def get_cell_points(self) -> list[Point]:
+        return [(x, y) for y in range(self.width - 1) for x in range(self.height - 1)]
+
+    def get_regions_wrapper(self) -> RegionsWrapper:
+        final_regions = RegionsWrapper()
+
+        # while points exist that are not classified into regions...
+        while True:
+            all_cell_points = set(self.get_cell_points())
+            points_in_regions = set(final_regions.get_points())
+            if len(all_cell_points - points_in_regions) == 0:
+                return final_regions
+
+            # Create and grow new region
+            start = list(all_cell_points - points_in_regions)[0]
+            region = self.make_region(start)
+
+            final_regions.regions.append(region)
+
+    def make_region(self, start: Point) -> Region:
+        region = set([start])
+        while True:
+            new_region = self.grow_step(region)
+            if len(new_region) == len(region):
+                return region
+            else:
+                region = new_region
+
+    def grow_step(self, region: Region) -> Region:
+        new_region = region.copy()
+        for p in region:
+            growth = self.grow_around_point(p)
+            new_region.update(growth)
+        return new_region
+
+    def grow_around_point(self, point: Point) -> set[Point]:
+        points = set()
+        # If and edge exists and the edge's state is False, the "grow" is valid
+        if self.edges.get(self.get_edge(point, RIGHT), 'no edge') == False:
+            p = pt_add(point, RIGHT)
+            if pt_in_bounds(p, self.width - 1, self.height - 1):
+                points.add(p)
+        if self.edges.get(self.get_edge(point, UP), 'no edge') == False:
+            p = pt_add(point, UP)
+            if pt_in_bounds(p, self.width - 1, self.height - 1):
+                points.add(p)
+        if self.edges.get(self.get_edge(point, LEFT), 'no edge') == False:
+            p = pt_add(point, LEFT)
+            if pt_in_bounds(p, self.width - 1, self.height - 1):
+                points.add(p)
+        if self.edges.get(self.get_edge(point, DOWN), 'no edge') == False:
+            p = pt_add(point, DOWN)
+            if pt_in_bounds(p, self.width - 1, self.height - 1):
+                points.add(p)
+        return points
+
+    def get_edge(self, point: Point, direction: Point) -> PointPair | str:
+        x, y = point
+        direction_map = {
+            RIGHT: frozenset(((x+1, y), (x+1, y+1))),
+            UP: frozenset(((x+1, y+1), (x, y+1))),
+            LEFT: frozenset(((x, y+1), (x, y))),
+            DOWN: frozenset(((x, y), (x+1, y))),
+        }
+        return direction_map[direction]
+
 
     def __str__(self) -> str:
         txt = TextGrid((self.width-1) * 2 + 1, (self.height-1) * 2 + 1)
@@ -125,9 +220,9 @@ class Grid:
                     pair: PointPair = frozenset((pt, up))
                     txt.write(x * 2, y * 2 + 1, VERT_ON if self.edges.get(pair, False) else VERT_OFF)
 
-                if self._cells is not None:
+                if self.cells is not None:
                     if x < self.width - 1 and y < self.height - 1:
-                        char = self._cells[y][x]
+                        char = self.cells[y][x]
                         if char != '':
                             txt.write(x * 2 + 1, y * 2 + 1, char)
 
@@ -183,16 +278,29 @@ def temp_traversal_demo():
     print(f'counts {len(results)} {len(end_to_end)}')
 
 
-def is_solved_tri_puzzle(g):
+def is_solved_tri_puzzle(g: Grid) -> bool:
     for y in range(g.height - 1):
         for x in range(g.width - 1):
-            cell = g._cells[y][x]
+            cell = g.cells[y][x]
             if cell != ' ':
                 count = int(cell)
                 touching = g.touching_edges(x, y)
                 if count != touching:
                     # print('touch', x, y, val, touching)
                     return False
+    return True
+
+
+def is_solved_region_puzzle(g: Grid) -> bool:
+    '''Solve the region grid puzzles'''
+    for region in g.get_regions_wrapper().regions:
+        # get cell values for each point in region
+        colors = [g.cells[point[1]][point[0]] for point in region]
+        # strip out whitespace and count number of unique colors
+        colors = {c for c in colors if c.strip() != ''}  # use set for uniqueness
+        # if any region has > 1 unique cell color, fail solution
+        if len(colors) > 1:
+            return False
     return True
 
 
@@ -222,6 +330,7 @@ def dummy_tri():
 
 
 def dummy_solve_tri_puzzles():
+    '''precalculate grids and solve multiple puzzles, starting with the same grid (testing the optimization)'''
     test_cells = []
     test_cells.append(tuple(reversed((
         ('3', ' ', ' ', ' '),
@@ -265,8 +374,8 @@ def main():
 
     # temp_test_1()
     # temp_traversal_demo()
-    dummy_tri()
-    # dummy_solve_tri_puzzles()
+    # dummy_tri()
+    dummy_solve_tri_puzzles()
 
     e = datetime.datetime.now()
     print(f'{e - s} ({s} -> {e})')
