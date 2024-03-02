@@ -43,7 +43,7 @@ def test_grid_deepcopy():
 
 def test_traversal():
     grid = puzzle.Grid(2, 3)
-    grids = puzzle.find_all_paths(grid, grid.start)
+    grids = grid.find_all_paths(grid.start)
     assert len(grids) == 17
 
 
@@ -67,8 +67,8 @@ Path: [(0, 0)]
 
 def test_tri_puzzle():
     grid = puzzle.Grid(4, 4)
-    grids_with_paths = puzzle.find_all_paths(grid, grid.start)
-    grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths()
+
     cells = tuple(reversed((
         ('3', ' ', ' '),
         (' ', ' ', '2'),
@@ -141,8 +141,7 @@ def test_region_separator_large():
 
 def test_region_puzzle_4x4_2_color():
     grid = puzzle.Grid(4, 4)
-    grids_with_paths = puzzle.find_all_paths(grid, grid.start)
-    grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths()
     cells = tuple(reversed((
         ('w', 'w', 'b'),
         ('w', 'b', ' '),
@@ -164,9 +163,9 @@ def test_region_puzzle_4x4_2_color():
     assert len(ans) == 1
 
 def test_region_puzzle_5x5_3_color():
+    '''This test can take 2 to 3 minutes to run.'''
     grid = puzzle.Grid(5, 5)
-    grids_with_paths = puzzle.find_all_paths(grid, grid.start)
-    grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths()
     cells = tuple(reversed((
         ('b', ' ', 'w', 'w'),
         ('r', 'r', ' ', 'w'),

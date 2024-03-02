@@ -1,14 +1,17 @@
 import datetime
 import copy
+import itertools
+from pathlib import Path
+import pickle
 
 Point = tuple[int, int]  # Note: This type is used to identify vertexes in the grid AND cells between the grid lines.
 PointPair = frozenset[Point]
 GridEdges = dict[PointPair, bool]
-Path = list[Point]
+PointPath = list[Point]
 Region = set[Point]
 Regions = list[Region]
 
-DEBUG = False
+DEBUG = True  # Must be True for tests to pass
 RIGHT: Point = (1, 0)
 UP: Point = (0, 1)
 LEFT: Point = (-1, 0)
@@ -16,9 +19,11 @@ DOWN: Point = (0, -1)
 
 
 if DEBUG:
-    START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^+X-X|'  # good for debugging grid/path
+    EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^+X-X|'  # good for debugging grid/path
 else:
-    START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = 'O^ ━ ┃ '  # good for showing solutions
+    # EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━ ┃ '  # good for showing solutions
+    # EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF =   ' O^ ═-║|'  # good for showing solutions
+    EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━-┃|'  # good for showing solutions
 
 
 def pt_add(a: Point, b: Point) -> Point:
@@ -50,7 +55,7 @@ class Grid:
         self.start: Point = (0, 0)
         self.end: Point = (width - 1, height - 1)
         self.edges: GridEdges = {}
-        self.path: Path = [self.start]
+        self.path: PointPath = [self.start]
         self.cells: tuple[tuple[str]] | None = None
 
         for y in range(height):
@@ -113,6 +118,9 @@ class Grid:
         self.edges[pair] = True
         self.path.append(hop)
 
+    def delete_edges_from_path(self, edges_to_del: set[PointPair]) -> None:
+        [self.edges.pop(e) for e in edges_to_del]
+
     def touching_edges(self, x: int, y: int) -> int:
         '''given x,y of an overlay cell, return the number of active edges that are adjacent'''
         assert 0 <= x < self.width - 1
@@ -166,27 +174,32 @@ class Grid:
         return new_region
 
     def grow_around_point(self, point: Point) -> set[Point]:
+        # BUG: This method doesn't properly handle a grid with some edges missing. It expects to work on a full grid
+        # and the higher level code will eliminate paths that use edges that have been eliminated. The way the code
+        # below is written, a new edge from calc_edge() is a 'no edge', the "growth" is halted in that direction.
+        # But when an internal edge is removed, the growth of a Region should continue. But in this current
+        # implementation, a region is blocked by a missing edge.
         points = set()
         # If and edge exists and the edge's state is False, the "grow" is valid
-        if self.edges.get(self.get_edge(point, RIGHT), 'no edge') == False:
+        if self.edges.get(self.calc_edge(point, RIGHT), 'no edge') == False:
             p = pt_add(point, RIGHT)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.get_edge(point, UP), 'no edge') == False:
+        if self.edges.get(self.calc_edge(point, UP), 'no edge') == False:
             p = pt_add(point, UP)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.get_edge(point, LEFT), 'no edge') == False:
+        if self.edges.get(self.calc_edge(point, LEFT), 'no edge') == False:
             p = pt_add(point, LEFT)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.get_edge(point, DOWN), 'no edge') == False:
+        if self.edges.get(self.calc_edge(point, DOWN), 'no edge') == False:
             p = pt_add(point, DOWN)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         return points
 
-    def get_edge(self, point: Point, direction: Point) -> PointPair | str:
+    def calc_edge(self, point: Point, direction: Point) -> PointPair:
         x, y = point
         direction_map = {
             RIGHT: frozenset(((x+1, y), (x+1, y+1))),
@@ -195,6 +208,37 @@ class Grid:
             DOWN: frozenset(((x, y), (x+1, y))),
         }
         return direction_map[direction]
+
+    def find_all_paths(self, cur_point: Point) -> list['Grid']:
+        '''Given a grid, return a list of grids that contain paths that start/end at the start/end'''
+        results: list[Grid] = []
+        for pt in self.valid_moves(cur_point):
+            g = copy.deepcopy(self)
+            g.add_link(cur_point, pt)  # creates new link and adds to grid.path
+            results.append(g)
+            results.extend(g.find_all_paths(pt))
+        return results
+
+    def calc_paths(self, cache_file: str = ''):
+        '''Convenience function to generate the initial enumeration of all paths.
+
+        Also caches data to disk if a `cache_file` name is provided'''
+
+        cache = Path(cache_file)
+        if cache_file == '' or not cache.exists():
+            print('Calculating full set of paths... This may take a couple minutes.')
+            grids_with_paths = self.find_all_paths(self.start)
+            grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+            if cache_file != '':  # only write if file was provided
+                print(f'Writing results cache to {cache_file}')
+                with cache.open('wb') as fout:
+                    pickle.dump((grids_with_paths, grids_with_complete_paths), fout)
+        else:
+            print(f'Reading cached results from {cache_file}.')
+            with cache.open('rb') as fin:
+                grids_with_paths, grids_with_complete_paths = pickle.load(fin)
+
+        return grids_with_paths, grids_with_complete_paths
 
     def is_solved_tri_puzzle(self) -> bool:
         '''Return True if the given Grid, cells and path are a solved Triangle puzzle'''
@@ -236,17 +280,27 @@ class Grid:
                     char = END
                 txt.write(x * 2, y * 2, char)
 
+                def get_char(pair, none_char, on_char, off_char):
+                    if pair not in self.edges:
+                        return none_char
+                    elif self.edges[pair] == True:
+                        return on_char
+                    elif self.edges[pair] == False:
+                        return off_char
+                    else:
+                        raise RuntimeError('Unable to determine character for point pair: {pair}')
+
                 # right
                 right = pt_add(pt, RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
-                    txt.write(x * 2 + 1, y * 2, HORIZ_ON if self.edges.get(pair, False) else HORIZ_OFF)
+                    txt.write(x * 2 + 1, y * 2, get_char(pair, EMPTY, HORIZ_ON, HORIZ_OFF))
 
                 # up
                 up = pt_add(pt, UP)
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
-                    txt.write(x * 2, y * 2 + 1, VERT_ON if self.edges.get(pair, False) else VERT_OFF)
+                    txt.write(x * 2, y * 2 + 1, get_char(pair, EMPTY, VERT_ON, VERT_OFF))
 
                 if self.cells is not None:
                     if x < self.width - 1 and y < self.height - 1:
@@ -269,17 +323,6 @@ class TextGrid:
 
     def write(self, x, y, char):
         self.grid[y][x] = char
-
-
-def find_all_paths(given_grid: Grid, cur_point: Point) -> list[Grid]:
-    '''Given a grid, return a list of grids that contain paths that start/end at the start/end'''
-    results: list[Grid] = []
-    for pt in given_grid.valid_moves(cur_point):
-        g = copy.deepcopy(given_grid)
-        g.add_link(cur_point, pt)  # creates new link and adds to grid.path
-        results.append(g)
-        results.extend(find_all_paths(g, pt))
-    return results
 
 
 def demo_simple():
@@ -308,11 +351,11 @@ def demo_traversal():
 
 def demo_tri():
     grid = Grid(3, 3)
-    over = tuple(reversed((
+    cells = tuple(reversed((
         (' ', ' '),
         ('3', ' '),
     )))
-    grid.set_cells(over)
+    grid.set_cells(cells)
     print(grid)
     results = find_all_paths(grid, grid.start)
     print(len(results))
@@ -365,10 +408,59 @@ def demo_solve_tri_puzzles():
         ans = []
         for g in grids_with_complete_paths:
             g.set_cells(cells)
-            if g.is_solved_tri_puzzle():
+            if g.is_solved_region_puzzle():
                 ans.append(g)
                 print(g)
         print('counts', len(grids_with_paths), len(grids_with_complete_paths), len(ans))
+
+
+def demo_initial_region_solve():
+    cells = tuple(reversed((
+        ('b', ' ', 'b', 'w'),
+        ('w', ' ', 'w', ' '),
+        (' ', 'b', ' ', ' '),
+        ('w', ' ', ' ', 'w'),
+    )))
+    edges_to_del: set[PointPair] = {
+        frozenset(((4, 0), (3, 0))),
+        frozenset(((3, 0), (3, 1))),
+        frozenset(((3, 1), (2, 1))),
+        frozenset(((3, 2), (3, 3))),
+        frozenset(((1, 2), (1, 3))),
+    }
+
+    grid = Grid(5, 5)
+    grid.set_cells(cells)
+
+    # print starting grid
+    grid.delete_edges_from_path(edges_to_del)  # because paths are caching in calc_paths(), this deletion only is cosmetic for the print()
+    print(grid)
+
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths('grid_5x5.cache.pickle')
+
+    ans = []
+    for g in grids_with_complete_paths:
+        if g.is_solved_region_puzzle():
+
+            # Test if any of the path segments do not exist in the grid
+            # This is possible because in general we are loading the fully enumerated list of Paths from disk
+            # and are not re-traversing the grid each time. It is a performance optimization to load the generic
+            # but exhaustive path traversal and simply skip any valid paths that use edges that don't exist in the grid.
+            keep = True
+            for points_on_path in itertools.pairwise(g.path):
+                if frozenset(points_on_path) in edges_to_del:
+                    keep = False
+                    break
+            if keep:
+                ans.append(g)
+
+    print('answers', '-' * 20)
+    for g in ans:
+        g.delete_edges_from_path(edges_to_del)  # this removal is only for printing purposes
+        print()
+        print(g)
+    print('counts', len(grids_with_paths), len(grids_with_complete_paths), len(ans))
+    print('end ', datetime.datetime.now())
 
 
 def main():
@@ -377,7 +469,8 @@ def main():
     demo_simple()
     demo_traversal()
     demo_tri()
-    # dummy_solve_tri_puzzles()
+    dummy_solve_tri_puzzles()
+    demo_initial_region_solve()
 
     e = datetime.datetime.now()
     print(f'{e - s} ({s} -> {e})')
