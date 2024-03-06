@@ -1,15 +1,11 @@
 import time
 import cfg
 import argparse
-from PIL import Image, ImageGrab, ImageOps
+import img_proc
+from PIL import Image, ImageOps
 import keyboard
 
-
-def get_screenshot(idx=0, save=False):
-    im = ImageGrab.grab(cfg.BBOX)
-    if save:
-        im.save(f'shot{idx:04d}.jpg')
-    return im
+import plot_utils
 
 
 def wait_for_keypress(key='x'):
@@ -22,7 +18,7 @@ def wait_for_keypress(key='x'):
 
 def process(im):
     im_poster = ImageOps.posterize(im, 3)
-    im_poster.show()
+    plot_utils.show(im_poster)
 
 
 def main(args):
@@ -34,7 +30,7 @@ def main(args):
             im.load()  # allocate storage for the image
     else:
         wait_for_keypress()
-        im = get_screenshot()
+        im = img_proc.get_screenshot()
 
     process(im)
 
@@ -50,16 +46,3 @@ def cli():
 
 if __name__ == '__main__':
     cli()
-
-    # print('saving')
-    # img = save_screenshot()
-    # print('posterizing')
-    # img_poster = PIL.ImageOps.posterize(img, 2)
-    # print('done')
-    # img.show()
-    # # x = input('do next')
-    # img_poster.show()
-    # print('done showing')
-
-    # time.sleep(5)
-    # spin()
