@@ -1,4 +1,5 @@
 # Basic utils for interacting with an image
+import datetime
 import ctypes
 from ctypes import wintypes
 from PIL import Image, ImageGrab, ImageColor

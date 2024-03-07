@@ -1,4 +1,13 @@
+from typ import Point
+
 WINDOW_DESC = "The Witness"
+
+DEBUG = True  # Must be True for tests to pass
+
+RIGHT: Point = (1, 0)
+UP: Point = (0, 1)
+LEFT: Point = (-1, 0)
+DOWN: Point = (0, -1)
 
 BLACK = (0, 0, 0)
 CELL_BACK = (1, 41, 31)

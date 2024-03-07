@@ -4,6 +4,7 @@ from PIL import Image, ImageFilter
 import keyboard
 import cfg
 import img_proc
+import img_parsing
 import plot_utils
 
 
@@ -36,9 +37,10 @@ def process_image(img):
 
     # parse image
     print('Parse image to get info from it and update the grid with the found cells and edges')
+    cells, broken_links = img_parsing.get_puzzle_details(img)
 
     # solve puzzle
-    print('Filter results down to the solution')
+    print('Filter results down to the solution using puzzle constraints')
 
     # display answer
     print('Puzzle answer')

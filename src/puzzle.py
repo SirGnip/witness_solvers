@@ -3,22 +3,11 @@ import copy
 import itertools
 from pathlib import Path
 import pickle
-
-Point = tuple[int, int]  # Note: This type is used to identify vertexes in the grid AND cells between the grid lines.
-PointPair = frozenset[Point]
-GridEdges = dict[PointPair, bool]
-PointPath = list[Point]
-Region = set[Point]
-Regions = list[Region]
-
-DEBUG = True  # Must be True for tests to pass
-RIGHT: Point = (1, 0)
-UP: Point = (0, 1)
-LEFT: Point = (-1, 0)
-DOWN: Point = (0, -1)
+import cfg
+from typ import Point, PointPair, GridEdges, PointPath, Region, Regions
 
 
-if DEBUG:
+if cfg.DEBUG:
     EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^+X-X|'  # good for debugging grid/path
 else:
     # EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━ ┃ '  # good for showing solutions
@@ -63,13 +52,13 @@ class Grid:
                 pt: Point = (x, y)
 
                 # right
-                right = pt_add(pt, RIGHT)
+                right = pt_add(pt, cfg.RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
                     self.edges[pair] = False
 
                 # up
-                up = pt_add(pt, UP)
+                up = pt_add(pt, cfg.UP)
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
                     self.edges[pair] = False
@@ -96,7 +85,7 @@ class Grid:
             points.add(a)
             points.add(b)
 
-        for d in (RIGHT, UP, LEFT, DOWN):
+        for d in (cfg.RIGHT, cfg.UP, cfg.LEFT, cfg.DOWN):
             hop = pt_add(pt, d)
             if self._contains(hop):
                 pair = frozenset((pt, hop))
@@ -181,20 +170,20 @@ class Grid:
         # implementation, a region is blocked by a missing edge.
         points = set()
         # If and edge exists and the edge's state is False, the "grow" is valid
-        if self.edges.get(self.calc_edge(point, RIGHT), 'no edge') == False:
-            p = pt_add(point, RIGHT)
+        if self.edges.get(self.calc_edge(point, cfg.RIGHT), 'no edge') == False:
+            p = pt_add(point, cfg.RIGHT)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, UP), 'no edge') == False:
-            p = pt_add(point, UP)
+        if self.edges.get(self.calc_edge(point, cfg.UP), 'no edge') == False:
+            p = pt_add(point, cfg.UP)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, LEFT), 'no edge') == False:
-            p = pt_add(point, LEFT)
+        if self.edges.get(self.calc_edge(point, cfg.LEFT), 'no edge') == False:
+            p = pt_add(point, cfg.LEFT)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, DOWN), 'no edge') == False:
-            p = pt_add(point, DOWN)
+        if self.edges.get(self.calc_edge(point, cfg.DOWN), 'no edge') == False:
+            p = pt_add(point, cfg.DOWN)
             if pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         return points
@@ -202,10 +191,10 @@ class Grid:
     def calc_edge(self, point: Point, direction: Point) -> PointPair:
         x, y = point
         direction_map = {
-            RIGHT: frozenset(((x+1, y), (x+1, y+1))),
-            UP: frozenset(((x+1, y+1), (x, y+1))),
-            LEFT: frozenset(((x, y+1), (x, y))),
-            DOWN: frozenset(((x, y), (x+1, y))),
+            cfg.RIGHT: frozenset(((x+1, y), (x+1, y+1))),
+            cfg.UP: frozenset(((x+1, y+1), (x, y+1))),
+            cfg.LEFT: frozenset(((x, y+1), (x, y))),
+            cfg.DOWN: frozenset(((x, y), (x+1, y))),
         }
         return direction_map[direction]
 
@@ -291,13 +280,13 @@ class Grid:
                         raise RuntimeError('Unable to determine character for point pair: {pair}')
 
                 # right
-                right = pt_add(pt, RIGHT)
+                right = pt_add(pt, cfg.RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
                     txt.write(x * 2 + 1, y * 2, get_char(pair, EMPTY, HORIZ_ON, HORIZ_OFF))
 
                 # up
-                up = pt_add(pt, UP)
+                up = pt_add(pt, cfg.UP)
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
                     txt.write(x * 2, y * 2 + 1, get_char(pair, EMPTY, VERT_ON, VERT_OFF))
