@@ -38,6 +38,13 @@ class Rect:
         '''This is the ordering expected by Pillow'''
         return self.x1, self.y1, self.x2, self.y2
 
+    def grow(self, delta):
+        return Rect(
+            self.x1-delta,
+            self.y1-delta,
+            self.x2+delta,
+            self.y2+delta)
+
 
 def get_win_location(desc) -> Rect :
     user32 = ctypes.windll.user32
