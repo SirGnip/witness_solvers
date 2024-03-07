@@ -9,8 +9,8 @@ class Clr:
 
 CLR = Clr()
 
-def get_screenshot(idx=0, save=False):
-    im = ImageGrab.grab(cfg.BBOX)
+def get_screenshot(bounding_box=None, idx=0, save=False):
+    im = ImageGrab.grab(bounding_box.as_tuple())
     if save:
         im.save(f'shot{idx:04d}.jpg')
     return im
