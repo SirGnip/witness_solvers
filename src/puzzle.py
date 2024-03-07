@@ -337,7 +337,7 @@ def demo_traversal():
     grid = Grid(4, 4)
     print()
     # print(grid)
-    results = find_all_paths(grid, grid.start)
+    results = grid.find_all_paths(grid.start)
     # for r in results:
     #     print()
     #     print(r)
@@ -357,7 +357,7 @@ def demo_tri():
     )))
     grid.set_cells(cells)
     print(grid)
-    results = find_all_paths(grid, grid.start)
+    results = grid.find_all_paths(grid.start)
     print(len(results))
     ans = []
 
@@ -397,7 +397,7 @@ def demo_solve_tri_puzzles():
     ))))
 
     grid = Grid(5, 5)
-    grids_with_paths = find_all_paths(grid, grid.start)
+    grids_with_paths = grid.find_all_paths(grid.start)
     grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
 
     for cells in test_cells:
@@ -469,7 +469,7 @@ def main():
     demo_simple()
     demo_traversal()
     demo_tri()
-    dummy_solve_tri_puzzles()
+    demo_solve_tri_puzzles()
     demo_initial_region_solve()
 
     e = datetime.datetime.now()

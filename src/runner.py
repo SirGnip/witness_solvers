@@ -37,7 +37,7 @@ def process_image(img):
     plot_utils.show(img)
 
     # parse image
-    print('Parse image and populate the cells/edges')
+    print('Parse image to get info from it and update the grid with the found cells and edges')
 
     # solve puzzle
     print('Filter results down to the solution')
