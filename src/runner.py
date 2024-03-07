@@ -1,4 +1,5 @@
 import time
+import datetime
 import cfg
 import argparse
 import ctypes
@@ -48,11 +49,8 @@ def process(im):
 
 
 def main(args):
-    if args.sleep:
-        print('Initial sleep', args.sleep)
-        time.sleep(args.sleep)
-    if args.path:
-        with Image.open(args.path) as im:
+    if args.imgpath:
+        with Image.open(args.imgpath) as im:
             im.load()  # allocate storage for the image
     else:
         while True:
@@ -64,14 +62,20 @@ def main(args):
             r.r.bottom -= 8
 
             im = img_proc.get_screenshot(r)
+            if args.save_screenshot:
+                now = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+                fname = f'screenshot_{now}.jpg'
+                print(f'Saving screenshot to {fname}')
+                im.save(fname)
+
             print(im)
-            # process(im)
+            process(im)
 
 
 def cli():
     parser = argparse.ArgumentParser(prog='Solvers for The Witness')
-    parser.add_argument('--path')
-    parser.add_argument('--sleep', type=int)
+    parser.add_argument('--imgpath', help='Use the provided file instead of taking a screenshot')
+    parser.add_argument('--save-screenshot', action='store_true', help='Save screenshot to a file before processing')
     args = parser.parse_args()
     main(args)
 
