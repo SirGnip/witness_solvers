@@ -1,21 +1,24 @@
 import time
 import datetime
-import cfg
+import collections.abc
 import argparse
 import ctypes
 from ctypes import wintypes
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter
 import keyboard
+import cfg
 import img_proc
 import plot_utils
 
 
-def wait_for_keypress(key='x'):
-    print('Waiting for keypress on', key)
+def wait_for_keypress(keys: list[str]) -> str:
+    print('Waiting for keypress on', keys)
     while True:
         time.sleep(0.1)
-        if keyboard.is_pressed(key):
-            break
+        for key in keys:
+            if keyboard.is_pressed(key):
+                return key
+
 
 class Rect:
     '''Wrapper around a wintypes.RECT object'''
@@ -43,33 +46,69 @@ def get_win_location(desc) -> Rect :
     return Rect(rect)
 
 
-def process(im):
-    im_poster = ImageOps.posterize(im, 3)
-    plot_utils.show(im_poster)
+def get_game_image(args) -> Image:
+    if args.imgpath:
+        with Image.open(args.imgpath) as img:
+            print(f'Loading source image from {args.imgpath} instead of taking a screenshot')
+            img.load()  # allocate storage for the image
+    else:
+        r = get_win_location(cfg.WINDOW_DESC)
+        r.r.left += 8
+        r.r.right -= 8
+        r.r.top += 31
+        r.r.bottom -= 8
+
+        img = img_proc.get_screenshot(r)
+        if args.save_screenshot:
+            now = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+            fname = f'screenshot_{now}.jpg'
+            print(f'Saving screenshot to {fname}')
+            img.save(fname)
+    return img
+
+
+def load_grid_cache():
+    '''Calculate grid paths or load from disk'''
+    return {}
+
+
+def preprocess_image(img: Image) -> Image:
+    palimage = Image.new('P', (16, 16))
+    palimage.putpalette(cfg.PALETTE_COLORS)
+    new_img = img.quantize(colors=len(cfg.PALETTE_COLORS) / 3, palette=palimage, dither=Image.Dither.NONE)
+    new_img = new_img.filter(ImageFilter.ModeFilter(5))
+    return new_img
+
+
+def process_image(img):
+    img = preprocess_image(img)
+    plot_utils.show(img)
+
+    # parse image
+    print('Parse image and populate the cells/edges')
+
+    # solve puzzle
+    print('Filter results down to the solution')
+
+    # display answer
+    print('Puzzle answer')
 
 
 def main(args):
+    grid_cache = load_grid_cache()
+
     if args.imgpath:
-        with Image.open(args.imgpath) as im:
-            im.load()  # allocate storage for the image
+        # use provided image file for one iteration
+        img = get_game_image(args)
+        process_image(img)
     else:
+        # realtime - grab screenshot from game
         while True:
-            wait_for_keypress()
-            r = get_win_location(cfg.WINDOW_DESC)
-            r.r.left += 8
-            r.r.right -= 8
-            r.r.top += 31
-            r.r.bottom -= 8
-
-            im = img_proc.get_screenshot(r)
-            if args.save_screenshot:
-                now = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-                fname = f'screenshot_{now}.jpg'
-                print(f'Saving screenshot to {fname}')
-                im.save(fname)
-
-            print(im)
-            process(im)
+            key = wait_for_keypress(['x'])
+            print(f'Keypress: {key}')
+            img = get_game_image(args)
+            print(img)
+            process_image(img)
 
 
 def cli():

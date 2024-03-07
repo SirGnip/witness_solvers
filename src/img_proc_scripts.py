@@ -2,31 +2,15 @@
 import sys
 from PIL.Image import Dither
 from PIL import Image, ImageDraw, ImageFilter
-
+from matplotlib.backend_bases import MouseButton
+import cfg
 import img_proc
 import plot_utils
-from matplotlib.backend_bases import MouseButton
+
 
 FILE = sys.argv[1]
 print(f'Reading from {FILE}')
 
-BLACK = (0, 0, 0)
-CELL_BACK = (1, 41, 31)
-CELL_WHITE = (215, 218, 216)
-BORDER_GREEN = (7, 60, 52)
-LINE_GREEN = (27, 47, 56)
-INNER_CELL_GREEN = (0, 164, 130)
-BACKGROUND_BROWN = (37, 21, 3)
-
-palette_colors = (
-        BLACK +
-        CELL_BACK +
-        CELL_WHITE +
-        BORDER_GREEN +
-        LINE_GREEN +
-        INNER_CELL_GREEN +
-        BACKGROUND_BROWN
-)
 
 def getf():
     with Image.open(FILE) as img:
@@ -138,8 +122,8 @@ def detect_edges_app():
         def __init__(self):
             self.img = getf()
             palimage = Image.new('P', (16, 16))
-            palimage.putpalette(palette_colors)
-            self.img = self.img.quantize(colors=len(palette_colors) / 3, palette=palimage, dither=Dither.NONE)
+            palimage.putpalette(cfg.PALETTE_COLORS)
+            self.img = self.img.quantize(colors=len(cfg.PALETTE_COLORS) / 3, palette=palimage, dither=Dither.NONE)
             self.img = self.img.filter(ImageFilter.ModeFilter(5))
             self.drw = ImageDraw.Draw(self.img)
         def get_img(self) -> Image:
