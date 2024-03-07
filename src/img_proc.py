@@ -22,18 +22,20 @@ def get_screenshot(bounding_box=None, idx=0, save=False):
 
 class Rect:
     '''Wrapper around a wintypes.RECT object'''
-    def __init__(self, r):
-        self.r: wintypes.RECT = r
+    def __init__(self, x1, y1, x2, y2):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
 
     def __str__(self):
-        x1, y1, x2, y2 = self.as_tuple()
-        width = x2 - x1
-        height = y2 - y1
-        return f"{x1},{x2}-{y1},{y2} {width}x{height}"
+        width = self.x2 - self.x1
+        height = self.y2 - self.y1
+        return f"{self.x1},{self.x2}-{self.y1},{self.y2} {width}x{height}"
 
     def as_tuple(self):
-        '''This is the format supported by Pillow'''
-        return self.r.left, self.r.top, self.r.right, self.r.bottom
+        '''This is the ordering expected by Pillow'''
+        return self.x1, self.y1, self.x2, self.y2
 
 
 def get_win_location(desc) -> Rect :
@@ -42,8 +44,9 @@ def get_win_location(desc) -> Rect :
     rect = wintypes.RECT()
     ff = ctypes.windll.user32.GetWindowRect(handle, ctypes.pointer(rect))
     print(ff)
-    print(rect)
-    return Rect(rect)
+    r = Rect(rect.left, rect.top, rect.right, rect.bottom)
+    print(r)
+    return r
 
 
 def get_game_image(args) -> Image:
@@ -53,10 +56,10 @@ def get_game_image(args) -> Image:
             img.load()  # allocate storage for the image
     else:
         r = get_win_location(cfg.WINDOW_DESC)
-        r.r.left += 8
-        r.r.right -= 8
-        r.r.top += 31
-        r.r.bottom -= 8
+        r.x1 += 8
+        r.x2 -= 8
+        r.y1 += 31
+        r.y2 -= 8
 
         img = get_screenshot(r)
         if args.save_screenshot:
@@ -65,7 +68,6 @@ def get_game_image(args) -> Image:
             print(f'Saving screenshot to {fname}')
             img.save(fname)
     return img
-
 
 
 def clr(name):
