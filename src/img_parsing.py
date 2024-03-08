@@ -1,12 +1,11 @@
 # Utilities to read an image and pull details from it (cell colors, broken links, etc)
 from PIL import Image, ImageDraw
+import cfg
 from typ import PointPair, CellGrid
 import plot_utils
 import img_proc
 import puzzle
 
-
-DEBUG_COLOR_IDX = 2
 
 def get_puzzle_details(img: Image) -> tuple[CellGrid, set[PointPair]]:
     print('Parsing details from puzzle')
@@ -27,31 +26,31 @@ def find_bounding_box(img: Image) -> img_proc.Rect:
 
     drw = ImageDraw.Draw(img)
 
-    for x in (260, 380):
+    for x in cfg.PANEL_BOUNDING_BOX_WHISKER_START_X:
         pixels = [img.getpixel((x, y)) for y in range(0, 480)]
         for y in range(len(pixels)):
-            if pixels[y:y+4] == [3, 4, 4, 4]:
-                img_proc.cross(drw, x, y, DEBUG_COLOR_IDX)
+            if pixels[y:y+4] == [cfg.BORDER_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX]:
+                img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
                 top_points.append((x, y))
                 break
 
         for y in range(len(pixels), -1, -1):
-            if pixels[y:y+4] == [4, 4, 4, 3]:
-                img_proc.cross(drw, x, y+3, DEBUG_COLOR_IDX)
+            if pixels[y:y+4] == [cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.BORDER_GREEN_IDX]:
+                img_proc.cross(drw, x, y+3, cfg.DEBUG_COLOR_IDX)
                 bottom_points.append((x, y+3))
                 break
 
-    for y in (180, 300):
+    for y in cfg.PANEL_BOUNDING_BOX_WHISKER_START_Y:
         pixels = [img.getpixel((x, y)) for x in range(0, 640)]
         for x in range(150, len(pixels)):  # 150 is to skip the puzzle to the left
-            if pixels[x:x+4] == [3, 4, 4, 4]:
-                img_proc.cross(drw, x, y, DEBUG_COLOR_IDX)
+            if pixels[x:x+4] == [cfg.BORDER_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX]:
+                img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
                 left_points.append((x, y))
                 break
 
         for x in range(len(pixels), -1, -1):
-            if pixels[x:x+4] == [4, 4, 4, 3]:
-                img_proc.cross(drw, x+3, y, DEBUG_COLOR_IDX)
+            if pixels[x:x+4] == [cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.BORDER_GREEN_IDX]:
+                img_proc.cross(drw, x+3, y, cfg.DEBUG_COLOR_IDX)
                 right_points.append((x+3, y))
                 break
 
@@ -85,12 +84,12 @@ def find_cell_colors(img: Image) -> CellGrid:
             y = y_chunk * v_slice
             p = img.getpixel((x, y))
             char = ' '
-            if p == 1:
+            if p == cfg.CELL_BLACK_IDX:
                 char = 'b'
-            elif p == 2:
+            elif p == cfg.CELL_WHITE_IDX:
                 char = 'w'
             row.append(char)
-            img_proc.cross(drw, x, y, 2)
+            img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
         cells.append(tuple(row))
     for r in cells:
         print(r)
@@ -114,8 +113,8 @@ def find_broken_edges(img: Image) -> set[PointPair]:
         x = min(x, img.width - 1)  # clamp to image dimension
         y = min(y, img.height - 1)  # clamp to image dimension
         p = img.getpixel((x, y))
-        img_proc.cross(drw, x, y, 2)
-        if p != 4:
+        img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
+        if p != cfg.LINE_GREEN_IDX:
             edges_to_del.add(edge)
     plot_utils.show(img)
 

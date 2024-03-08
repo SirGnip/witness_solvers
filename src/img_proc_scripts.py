@@ -137,7 +137,7 @@ def detect_edges_app():
                 print(x, y, p)
                 if p == 4:
                     print('found', x, y)
-                    img_proc.cross(self.drw, x, y, 2)
+                    img_proc.cross(self.drw, x, y, cfg.DEBUG_COLOR_IDX)
                     break
                 else:
                     y += 1

@@ -7,14 +7,6 @@ import cfg
 from typ import Point, PointPair, GridEdges, PointPath, Region, Regions
 
 
-if cfg.DEBUG:
-    EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^+X-X|'  # good for debugging grid/path
-else:
-    # EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━ ┃ '  # good for showing solutions
-    # EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF =   ' O^ ═-║|'  # good for showing solutions
-    EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━-┃|'  # good for showing solutions
-
-
 def lerp(a: float, b: float, u: float) -> float:
     '''Linear interpolation'''
     return a + ((b - a) * u)
@@ -269,11 +261,11 @@ class Grid:
                 pt = (x, y)
 
                 # intersection
-                char = INTERSECT
+                char = cfg.INTERSECT
                 if pt == self.start:
-                    char = START
+                    char = cfg.START
                 if pt == self.end:
-                    char = END
+                    char = cfg.END
                 txt.write(x * 2, y * 2, char)
 
                 def get_char(pair, none_char, on_char, off_char):
@@ -290,13 +282,13 @@ class Grid:
                 right = pt_add(pt, cfg.RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
-                    txt.write(x * 2 + 1, y * 2, get_char(pair, EMPTY, HORIZ_ON, HORIZ_OFF))
+                    txt.write(x * 2 + 1, y * 2, get_char(pair, cfg.EMPTY, cfg.HORIZ_ON, cfg.HORIZ_OFF))
 
                 # up
                 up = pt_add(pt, cfg.UP)
                 if self._contains(up):
                     pair: PointPair = frozenset((pt, up))
-                    txt.write(x * 2, y * 2 + 1, get_char(pair, EMPTY, VERT_ON, VERT_OFF))
+                    txt.write(x * 2, y * 2 + 1, get_char(pair, cfg.EMPTY, cfg.VERT_ON, cfg.VERT_OFF))
 
                 if self.cells is not None:
                     if x < self.width - 1 and y < self.height - 1:
