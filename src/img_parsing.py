@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw
 from typ import PointPair, CellGrid
 import plot_utils
 import img_proc
+import puzzle
 
 
 DEBUG_COLOR_IDX = 2
@@ -11,10 +12,9 @@ def get_puzzle_details(img: Image) -> tuple[CellGrid, set[PointPair]]:
     print('Parsing details from puzzle')
     bounding_box = find_bounding_box(img)
     puzzle_img = img.crop(bounding_box.as_tuple())
-    import plot_utils
     plot_utils.show(puzzle_img)
     cells = find_cell_colors(puzzle_img)
-    broken_links = find_broken_links(puzzle_img)
+    broken_links = find_broken_edges(puzzle_img)
     return cells, broken_links
 
 
@@ -98,13 +98,25 @@ def find_cell_colors(img: Image) -> CellGrid:
     return tuple(reversed(cells))
 
 
-def find_broken_links(img: Image) -> set[PointPair]:
-    print('Parsing broken links from puzzle image')
-    edges_to_del: set[PointPair] = {
-        frozenset(((4, 0), (3, 0))),
-        frozenset(((3, 0), (3, 1))),
-        frozenset(((3, 1), (2, 1))),
-        frozenset(((3, 2), (3, 3))),
-        frozenset(((1, 2), (1, 3))),
-    }
+def find_broken_edges(img: Image) -> set[PointPair]:
+    print('Parsing broken edges from puzzle image')
+
+    edges_to_del = set()
+    drw = ImageDraw.Draw(img)
+    h_step = img.width / 4
+    v_step = img.height / 4
+    print(img)
+
+    for edge in puzzle.Grid.enumerate_all_edges(5, 5):
+        p1, p2 = edge
+        mid_point_idx = puzzle.pt_lerp(p1, p2, 0.5)
+        x, y = mid_point_idx[0] * h_step, mid_point_idx[1] * v_step
+        x = min(x, img.width - 1)  # clamp to image dimension
+        y = min(y, img.height - 1)  # clamp to image dimension
+        p = img.getpixel((x, y))
+        img_proc.cross(drw, x, y, 2)
+        if p != 4:
+            edges_to_del.add(edge)
+    plot_utils.show(img)
+
     return edges_to_del

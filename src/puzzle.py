@@ -15,6 +15,11 @@ else:
     EMPTY, START, END, INTERSECT, HORIZ_ON, HORIZ_OFF, VERT_ON, VERT_OFF = ' O^ ━-┃|'  # good for showing solutions
 
 
+def lerp(a: float, b: float, u: float) -> float:
+    '''Linear interpolation'''
+    return a + ((b - a) * u)
+
+
 def pt_add(a: Point, b: Point) -> Point:
     return a[0] + b[0], a[1] + b[1]
 
@@ -23,6 +28,12 @@ def pt_in_bounds(p: Point, x_bound: int, y_bound: int) -> bool:
     '''Is given point in bounds. x_bound and y_bound are EXCLUSIVE'''
     x, y = p
     return 0 <= x < x_bound and 0 <= y < y_bound
+
+
+def pt_lerp(p1, p2, u):
+    x1, y1 = p1
+    x2, y2 = p2
+    return lerp(x1, x2, u), lerp(y1, y2, u)
 
 
 class RegionsWrapper:
@@ -47,21 +58,8 @@ class Grid:
         self.path: PointPath = [self.start]
         self.cells: tuple[tuple[str]] | None = None
 
-        for y in range(height):
-            for x in range(width):
-                pt: Point = (x, y)
-
-                # right
-                right = pt_add(pt, cfg.RIGHT)
-                if self._contains(right):
-                    pair: PointPair = frozenset((pt, right))
-                    self.edges[pair] = False
-
-                # up
-                up = pt_add(pt, cfg.UP)
-                if self._contains(up):
-                    pair: PointPair = frozenset((pt, up))
-                    self.edges[pair] = False
+        for edge in self.enumerate_all_edges(self.width, self.height):
+            self.edges[edge] = False
 
     def set_cells(self, cells: tuple[tuple[str, ...]]) -> None:
         '''2D tuple of ints representing the values in the  is expected to have 0,0 at bottom left. A "reversed" on a tuple literal will work.'''
@@ -92,6 +90,15 @@ class Grid:
                 if pair in self.edges and self.edges[pair] == False and hop not in points:
                     results.append(hop)
         return results
+
+    @staticmethod
+    def enumerate_all_edges(width, height):
+        for y in range(height):
+            points = [(x, y) for x in range(width)]
+            yield from [frozenset(pair) for pair in itertools.pairwise(points)]
+        for x in range(width):
+            points = [(x, y) for y in range(height)]
+            yield from [frozenset(pair) for pair in itertools.pairwise(points)]
 
     def add_link(self, start: Point, hop: Point) -> None:
         pair: PointPair = frozenset((start, hop))
@@ -448,7 +455,7 @@ def demo_initial_region_solve():
         g.delete_edges_from_path(edges_to_del)  # this removal is only for printing purposes
         print()
         print(g)
-    print('counts', len(grids_with_paths), len(grids_with_complete_paths), len(ans))
+    print('counts',len( grids_with_paths), len(grids_with_complete_paths), len(ans))
     print('end ', datetime.datetime.now())
 
 
