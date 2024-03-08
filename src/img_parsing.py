@@ -94,7 +94,7 @@ def find_cell_colors(img: Image) -> CellGrid:
     for r in cells:
         print(r)
     plot_utils.show(img)
-    return tuple(reversed(cells))
+    return tuple(cells)
 
 
 def find_broken_edges(img: Image) -> set[PointPair]:

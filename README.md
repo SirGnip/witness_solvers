@@ -4,12 +4,6 @@ This is an experiment into seeing if I can have a tool that solves some puzzles 
 I place some very tight constraints on it to make it easier to write.
 
 
-# Assumptions
-- The Witness application is run at a resolution of 640x480.
-- The Witness applications is run in windowed mode, not fullscreen.
-- All desktop screen scaling is removed. 
-
-
 # Install
 
     py -3.11 -m venv venv
@@ -17,3 +11,9 @@ I place some very tight constraints on it to make it easier to write.
     pip install pillow keyboard pytest matplotlib
     ...or...
     pip install -r requirements.txt
+
+
+# Assumptions
+- The Witness application is run at a resolution of 640x480.
+- The Witness applications is run in windowed mode, not fullscreen.
+- All desktop screen scaling is removed. 

@@ -10,12 +10,12 @@ def test_make_grid():
 +-+-+
 | | |
 O-+-+
-Path: [(0, 0)]
+Path: [(0, 2)]
     '''.strip()
 
 def test_make_grid_path():
     grid = puzzle.Grid(3, 3)
-    a, b, c = (1, 1), (2, 1), (2, 2)
+    a, b, c = (1, 1), (2, 1), (2, 0)
     grid.edges[frozenset((a, b))] = True
     grid.edges[frozenset((b, c))] = True
     txt = str(grid)
@@ -25,7 +25,7 @@ def test_make_grid_path():
 +-+X+
 | | |
 O-+-+
-Path: [(0, 0)]
+Path: [(0, 2)]
     '''.strip()
 
 def test_grid_deepcopy():
@@ -49,10 +49,10 @@ def test_traversal():
 
 def test_overlay():
     grid = puzzle.Grid(3, 3)
-    over = tuple(reversed((
+    over = tuple((
         (' ', '1'),
         ('2', '3')
-    )))
+    ))
     grid.set_cells(over)
     txt = str(grid)
     assert txt == '''
@@ -61,7 +61,7 @@ def test_overlay():
 +-+-+
 |2|3|
 O-+-+
-Path: [(0, 0)]
+Path: [(0, 2)]
         '''.strip()
 
 
@@ -69,11 +69,11 @@ def test_tri_puzzle():
     grid = puzzle.Grid(4, 4)
     grids_with_paths, grids_with_complete_paths = grid.calc_paths()
 
-    cells = tuple(reversed((
+    cells = tuple((
         ('3', ' ', ' '),
         (' ', ' ', '2'),
         (' ', ' ', '1'),
-    )))
+    ))
 
     ans = []
     for g in grids_with_complete_paths:
@@ -90,10 +90,10 @@ def test_region_separator():
     g = puzzle.Grid(3, 3)
     # print()
     # print(g)
-    g.append_to_path((1, 0))
+    g.append_to_path((1, 2))
     g.append_to_path((1, 1))
     g.append_to_path((2, 1))
-    g.append_to_path((2, 2))
+    g.append_to_path((2, 0))
     # print(g)
 
     regions = g.get_regions_wrapper()  # list[list[cell]]
@@ -108,28 +108,28 @@ def test_region_separator_large():
     g = puzzle.Grid(5, 5)
     # print()
     # print(g)
-    g.append_to_path((1, 0))
-    g.append_to_path((1, 1))
-    g.append_to_path((0, 1))
-    g.append_to_path((0, 2))
-    g.append_to_path((0, 3))
-    g.append_to_path((0, 4))
     g.append_to_path((1, 4))
-    g.append_to_path((2, 4))
-    g.append_to_path((3, 4))
-    g.append_to_path((3, 3))
-    g.append_to_path((2, 3))
     g.append_to_path((1, 3))
-    g.append_to_path((1, 2))
-    g.append_to_path((2, 2))
-    g.append_to_path((2, 1))
+    g.append_to_path((0, 3))
+    g.append_to_path((0, 2))
+    g.append_to_path((0, 1))
+    g.append_to_path((0, 0))
+    g.append_to_path((1, 0))
     g.append_to_path((2, 0))
     g.append_to_path((3, 0))
     g.append_to_path((3, 1))
+    g.append_to_path((2, 1))
+    g.append_to_path((1, 1))
+    g.append_to_path((1, 2))
+    g.append_to_path((2, 2))
+    g.append_to_path((2, 3))
+    g.append_to_path((2, 4))
+    g.append_to_path((3, 4))
+    g.append_to_path((3, 3))
     g.append_to_path((3, 2))
     g.append_to_path((4, 2))
-    g.append_to_path((4, 3))
-    g.append_to_path((4, 4))
+    g.append_to_path((4, 1))
+    g.append_to_path((4, 0))
     # print(g)
 
     regions = g.get_regions_wrapper()  # list[list[cell]]
@@ -142,11 +142,11 @@ def test_region_separator_large():
 def test_region_puzzle_4x4_2_color():
     grid = puzzle.Grid(4, 4)
     grids_with_paths, grids_with_complete_paths = grid.calc_paths()
-    cells = tuple(reversed((
+    cells = tuple((
         ('w', 'w', 'b'),
         ('w', 'b', ' '),
         (' ', 'b', 'w'),
-    )))
+    ))
 
     ans = []
     for g in grids_with_complete_paths:
@@ -166,12 +166,12 @@ def test_region_puzzle_5x5_3_color():
     '''This test can take 2 to 3 minutes to run.'''
     grid = puzzle.Grid(5, 5)
     grids_with_paths, grids_with_complete_paths = grid.calc_paths()
-    cells = tuple(reversed((
+    cells = tuple((
         ('b', ' ', 'w', 'w'),
         ('r', 'r', ' ', 'w'),
         (' ', 'w', ' ', ' '),
         (' ', ' ', 'w', 'b'),
-    )))
+    ))
 
     ans = []
     for g in grids_with_complete_paths:

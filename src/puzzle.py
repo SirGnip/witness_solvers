@@ -41,11 +41,12 @@ class RegionsWrapper:
 
 
 class Grid:
+    '''Origin is at top-left'''
     def __init__(self, width, height):
         self.width: int = width
         self.height: int = height
-        self.start: Point = (0, 0)
-        self.end: Point = (width - 1, height - 1)
+        self.start: Point = (0, height - 1)
+        self.end: Point = (width - 1, 0)
         self.edges: GridEdges = {}
         self.path: PointPath = [self.start]
         self.cells: tuple[tuple[str]] | None = None
@@ -54,7 +55,7 @@ class Grid:
             self.edges[edge] = False
 
     def set_cells(self, cells: tuple[tuple[str, ...]]) -> None:
-        '''2D tuple of ints representing the values in the  is expected to have 0,0 at bottom left. A "reversed" on a tuple literal will work.'''
+        '''2D tuple of ints representing the values in the grid cells (boxes, triangle count, etc). Origin is top-left.'''
         self.cells = cells
 
     def _contains(self, pt: Point) -> bool:
@@ -75,7 +76,7 @@ class Grid:
             points.add(a)
             points.add(b)
 
-        for d in (cfg.RIGHT, cfg.UP, cfg.LEFT, cfg.DOWN):
+        for d in (cfg.RIGHT, cfg.DOWN, cfg.LEFT, cfg.UP):
             hop = pt_add(pt, d)
             if self._contains(hop):
                 pair = frozenset((pt, hop))
@@ -162,11 +163,17 @@ class Grid:
         return new_region
 
     def grow_around_point(self, point: Point) -> set[Point]:
-        # BUG: This method doesn't properly handle a grid with some edges missing. It expects to work on a full grid
-        # and the higher level code will eliminate paths that use edges that have been eliminated. The way the code
-        # below is written, a new edge from calc_edge() is a 'no edge', the "growth" is halted in that direction.
-        # But when an internal edge is removed, the growth of a Region should continue. But in this current
-        # implementation, a region is blocked by a missing edge.
+        '''Return a set of Points around the given points after "growing" the point.
+        Note: A `Point` in this function represents the location of a cell, NOT an intersection of grid lines.'''
+
+        # BUG: This method doesn't properly handle a grid with some edges missing. It does function properly on a full
+        # grid. I currently don't use this function to handle grids with missing edges.  But, to get around this, I have
+        # higher level functions in the puzzle solving logic that do logic with missing edges and eliminates those paths.
+        # That was easier than making this function more general.
+        #
+        # Description of bug: With the code below as written, a new edge from calc_edge() is a 'no edge', the "growth"
+        # is halted in that direction. But when an internal edge is removed, the growth of a Region should continue.
+        # But in this current implementation, a region is blocked by a missing edge.
         points = set()
         # If and edge exists and the edge's state is False, the "grow" is valid
         if self.edges.get(self.calc_edge(point, cfg.RIGHT), 'no edge') == False:
@@ -188,12 +195,15 @@ class Grid:
         return points
 
     def calc_edge(self, point: Point, direction: Point) -> PointPair:
+        '''Given a Point (that identifies a cell), return the Edge that lies in the direction given
+        Note: It is overloading terminology a bit, but Point here is the x,y of a cell while the PointPair contains x,y
+        values that represent points on the grid lines. The x,y values represent two slightly different concepts here.'''
         x, y = point
         direction_map = {
-            cfg.RIGHT: frozenset(((x+1, y), (x+1, y+1))),
-            cfg.UP: frozenset(((x+1, y+1), (x, y+1))),
-            cfg.LEFT: frozenset(((x, y+1), (x, y))),
-            cfg.DOWN: frozenset(((x, y), (x+1, y))),
+            cfg.RIGHT: frozenset(((x+1, y+1), (x+1, y))),
+            cfg.DOWN: frozenset(((x, y+1), (x+1, y+1))),
+            cfg.LEFT: frozenset(((x, y), (x, y+1))),
+            cfg.UP: frozenset(((x+1, y), (x, y))),
         }
         return direction_map[direction]
 
@@ -258,7 +268,7 @@ class Grid:
 
         for y in range(self.height):
             for x in range(self.width):
-                pt = (x, y)
+                pt = (x, y)  # point on a grid line, not a cell
 
                 # intersection
                 char = cfg.INTERSECT
@@ -284,10 +294,10 @@ class Grid:
                     pair: PointPair = frozenset((pt, right))
                     txt.write(x * 2 + 1, y * 2, get_char(pair, cfg.EMPTY, cfg.HORIZ_ON, cfg.HORIZ_OFF))
 
-                # up
-                up = pt_add(pt, cfg.UP)
-                if self._contains(up):
-                    pair: PointPair = frozenset((pt, up))
+                # down
+                down = pt_add(pt, cfg.DOWN)
+                if self._contains(down):
+                    pair: PointPair = frozenset((pt, down))
                     txt.write(x * 2, y * 2 + 1, get_char(pair, cfg.EMPTY, cfg.VERT_ON, cfg.VERT_OFF))
 
                 if self.cells is not None:
@@ -300,13 +310,14 @@ class Grid:
 
 
 class TextGrid:
-    '''Helper class that eases writing a character to x, y positions in a 2D grid of characters'''
+    '''Helper class that eases writing a character to x, y positions in a 2D grid of characters
+
+    The origin is at the top-left of the grid'''
     def __init__(self, width, height, default=' '):
         self.grid = [[default for x in range(width)] for y in range(height)]
 
     def __str__(self):
         rows = [''.join(row) for row in self.grid]
-        rows.reverse()
         return '\n'.join(rows)
 
     def write(self, x, y, char):
@@ -339,10 +350,10 @@ def demo_traversal():
 
 def demo_tri():
     grid = Grid(3, 3)
-    cells = tuple(reversed((
+    cells = tuple((
         (' ', ' '),
         ('3', ' '),
-    )))
+    ))
     grid.set_cells(cells)
     print(grid)
     results = grid.find_all_paths(grid.start)
@@ -365,28 +376,27 @@ def demo_tri():
 def demo_solve_tri_puzzles():
     '''precalculate grids and solve multiple puzzles, starting with the same grid (testing the optimization)'''
     test_cells = []
-    test_cells.append(tuple(reversed((
+    test_cells.append(tuple((
         ('3', ' ', ' ', ' '),
         (' ', ' ', '2', '1'),
         (' ', ' ', '1', ' '),
         ('2', ' ', '1', ' '),
-    ))))
-    test_cells.append(tuple(reversed((
+    )))
+    test_cells.append(tuple((
         (' ', ' ', ' ', ' '),
         (' ', ' ', ' ', '1'),
         ('2', ' ', '1', '1'),
         (' ', '1', '2', ' '),
-    ))))
-    test_cells.append(tuple(reversed((
+    )))
+    test_cells.append(tuple((
         ('1', ' ', ' ', ' '),
         (' ', '2', '2', '1'),
         (' ', '1', '2', ' '),
         ('2', ' ', '1', ' '),
-    ))))
+    )))
 
     grid = Grid(5, 5)
-    grids_with_paths = grid.find_all_paths(grid.start)
-    grids_with_complete_paths = [g for g in grids_with_paths if g.path[-1] == g.end]
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths('grid_5x5.cache.pickle')
 
     for cells in test_cells:
         print('=' * 80, datetime.datetime.now())
@@ -396,25 +406,25 @@ def demo_solve_tri_puzzles():
         ans = []
         for g in grids_with_complete_paths:
             g.set_cells(cells)
-            if g.is_solved_region_puzzle():
+            if g.is_solved_tri_puzzle():
                 ans.append(g)
                 print(g)
         print('counts', len(grids_with_paths), len(grids_with_complete_paths), len(ans))
 
 
 def demo_initial_region_solve():
-    cells = tuple(reversed((
+    cells = tuple((
         ('b', ' ', 'b', 'w'),
         ('w', ' ', 'w', ' '),
         (' ', 'b', ' ', ' '),
         ('w', ' ', ' ', 'w'),
-    )))
+    ))
     edges_to_del: set[PointPair] = {
-        frozenset(((4, 0), (3, 0))),
-        frozenset(((3, 0), (3, 1))),
-        frozenset(((3, 1), (2, 1))),
-        frozenset(((3, 2), (3, 3))),
-        frozenset(((1, 2), (1, 3))),
+        frozenset(((4, 4), (3, 4))),
+        frozenset(((3, 4), (3, 3))),
+        frozenset(((3, 3), (2, 3))),
+        frozenset(((3, 2), (3, 1))),
+        frozenset(((1, 2), (1, 1))),
     }
 
     grid = Grid(5, 5)
@@ -428,6 +438,7 @@ def demo_initial_region_solve():
 
     ans = []
     for g in grids_with_complete_paths:
+        g.set_cells(cells)
         if g.is_solved_region_puzzle():
 
             # Test if any of the path segments do not exist in the grid
