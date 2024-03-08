@@ -218,9 +218,8 @@ class Grid:
         return results
 
     def calc_paths(self, cache_file: str = ''):
-        '''Convenience function to generate the initial enumeration of all paths.
-
-        Also caches data to disk if a `cache_file` name is provided'''
+        '''Wrapper function around find_all_paths() that either calls find_all_paths() or reads the results from a cache.
+        Caches generated data to disk if a `cache_file` name is provided'''
 
         cache = Path(cache_file)
         if cache_file == '' or not cache.exists():
