@@ -116,6 +116,10 @@ def find_broken_edges(img: Image) -> set[PointPair]:
         img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
         if p != cfg.LINE_GREEN_IDX:
             edges_to_del.add(edge)
+
+    for e in edges_to_del:
+        print(e)
+
     plot_utils.show(img)
 
     return edges_to_del
