@@ -1,5 +1,9 @@
 import copy
 import puzzle
+import cfg
+
+
+assert cfg.DEBUG == True  # DEBUG must be True for tests to pass
 
 def test_make_grid():
     grid = puzzle.Grid(3, 3)
@@ -151,7 +155,7 @@ def test_region_puzzle_4x4_2_color():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if g.is_solved_region_puzzle():
+        if g.is_solved_region_puzzle(set()):
             ans.append(g)
 
     # for a in ans:
@@ -176,7 +180,7 @@ def test_region_puzzle_5x5_3_color():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if g.is_solved_region_puzzle():
+        if g.is_solved_region_puzzle(set()):
             ans.append(g)
 
     # for a in ans:

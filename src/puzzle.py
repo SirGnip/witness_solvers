@@ -250,7 +250,7 @@ class Grid:
                         return False
         return True
 
-    def is_solved_region_puzzle(self, edges_to_del) -> bool:
+    def is_solved_region_puzzle(self, edges_to_del: set[PointPair]) -> bool:
         '''Return True if the given Grid, cells and path are a solved Region puzzle'''
         for region in self.get_regions_wrapper().regions:
             # get cell values for each point in region
