@@ -39,6 +39,7 @@ def preprocess_image(img: Image) -> Image:
 def process_image(img, grid, grids_with_complete_paths):
     assert img.size == (640, 480)
     plot_utils.show(img)
+
     img = preprocess_image(img)
     plot_utils.show(img)
 
@@ -67,14 +68,19 @@ def main(args):
     grid, grids_with_paths, grids_with_complete_paths = load_initial_grid_cache(5, 5)
 
     if args.imgpath:
-        # use provided image file for one iteration
+        cfg.config_factory(args.puzzle_type)
+        # use specified image file for one iteration
         img = img_proc.get_game_image(args)
         process_image(img, grid, grids_with_complete_paths)
     else:
         # realtime - grab screenshot from running game
         while True:
-            key = wait_for_keypress(['x'])
+            key = wait_for_keypress(['z', 'x'])
             print(f'Keypress: {key}')
+
+            key_map = {'z': 'Starter2Region', 'x': 'TripletRegion'}
+            cfg.config_factory(key_map[key])
+
             img = img_proc.get_game_image(args)
             print(img)
             process_image(img, grid, grids_with_complete_paths)
@@ -83,6 +89,7 @@ def main(args):
 def cli():
     parser = argparse.ArgumentParser(prog='Solvers for The Witness')
     parser.add_argument('--imgpath', help='Use the provided file instead of taking a screenshot')
+    parser.add_argument('--puzzle-type', choices=cfg.PUZZLE_TYPES, help='Type of puzzle to solve')
     parser.add_argument('--save-screenshot', action='store_true', help='Save screenshot to a file before processing')
     args = parser.parse_args()
     main(args)

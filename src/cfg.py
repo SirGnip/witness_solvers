@@ -16,6 +16,25 @@ else:
 
 WINDOW_DESC = "The Witness"
 
+PUZZLE_TYPES = (
+    'Starter2Region',
+    'TripletRegion',
+)
+
+Puzzle = None
+def config_factory(puzzle_type):
+    '''Mutating module-level global state. Yuck.'''
+    global Puzzle
+
+    print(f'Configuring for puzzle type: {puzzle_type}')
+    if puzzle_type == 'Starter2Region':
+        Puzzle = Region2ColorStarter()
+    elif puzzle_type == 'TripletRegion':
+        Puzzle = RegionColorTriplet()
+    else:
+        raise RuntimeError(f'Unknown puzzle_type: {puzzle_type}')
+
+
 RIGHT: Point = (1, 0)
 UP: Point = (0, -1)
 LEFT: Point = (-1, 0)
@@ -106,9 +125,3 @@ class RegionColorTriplet(PuzzleConfig):
         elif pixel_idx == self.CELL_ORANGE:
             return 'o'
         return ' '
-
-
-# Puzzle = Region2ColorStarter()
-Puzzle = RegionColorTriplet()
-
-
