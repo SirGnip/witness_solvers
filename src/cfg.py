@@ -1,6 +1,7 @@
 from typ import Point
 
 DEBUG = True  # Must be True for tests to pass
+SHOW_DEBUG_IMG = False
 
 WINDOW_DESC = "The Witness"
 

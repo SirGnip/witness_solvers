@@ -60,7 +60,7 @@ def get_win_location(desc) -> Rect :
 def get_game_image(args) -> Image:
     if args.imgpath:
         with Image.open(args.imgpath) as img:
-            print(f'Loading source image from {args.imgpath} instead of taking a screenshot')
+            print(f'Loading source image from {args.imgpath}, and not taking a screenshot of the game.')
             img.load()  # allocate storage for the image
     else:
         r = get_win_location(cfg.WINDOW_DESC)

@@ -3,10 +3,11 @@ import argparse
 from PIL import Image, ImageFilter
 import keyboard
 import cfg
+import puzzle
 import img_proc
 import img_parsing
 import plot_utils
-import puzzle
+
 
 
 def wait_for_keypress(keys: list[str]) -> str:
@@ -17,9 +18,12 @@ def wait_for_keypress(keys: list[str]) -> str:
             if keyboard.is_pressed(key):
                 return key
 
-def load_grid_cache():
+def load_initial_grid_cache(width, height):
     '''Calculate grid paths or load from disk'''
-    return {}
+    print(f'Cache initial path info for grid {width}x{height}')
+    grid = puzzle.Grid(width, height)
+    grids_with_paths, grids_with_complete_paths = grid.calc_paths('grid_5x5.cache.pickle')
+    return grid, grids_with_paths, grids_with_complete_paths
 
 
 def preprocess_image(img: Image) -> Image:
@@ -32,7 +36,8 @@ def preprocess_image(img: Image) -> Image:
     return new_img
 
 
-def process_image(img):
+def process_image(img, grid, grids_with_complete_paths):
+    assert img.size == (640, 480)
     img = preprocess_image(img)
     plot_utils.show(img)
 
@@ -41,25 +46,29 @@ def process_image(img):
     cells, broken_edges = img_parsing.get_puzzle_details(img)
 
     # print out grid for confirmation that processing worked
-    grid = puzzle.Grid(5, 5)
     grid.set_cells(cells)
     grid.delete_edges_from_path(broken_edges)
     print(grid)
 
     # solve puzzle
-    print('Filter results down to the solution using puzzle constraints')
-
-    # display answer
-    print('Puzzle answer')
+    print(f'Given {len(grids_with_complete_paths)} full paths, filter results down to the solutions that match the constraints.')
+    answers = []
+    for idx, grid_with_path in enumerate(grids_with_complete_paths):
+        grid_with_path.set_cells(cells)
+        if grid_with_path.is_solved_region_puzzle(broken_edges):
+            print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
+            print(grid_with_path)
+            answers.append(grid_with_path)
+    print(f'Found {len(answers)} answers')
 
 
 def main(args):
-    grid_cache = load_grid_cache()
+    grid, grids_with_paths, grids_with_complete_paths = load_initial_grid_cache(5, 5)
 
     if args.imgpath:
         # use provided image file for one iteration
         img = img_proc.get_game_image(args)
-        process_image(img)
+        process_image(img, grid, grids_with_complete_paths)
     else:
         # realtime - grab screenshot from running game
         while True:
@@ -67,7 +76,7 @@ def main(args):
             print(f'Keypress: {key}')
             img = img_proc.get_game_image(args)
             print(img)
-            process_image(img)
+            process_image(img, grid, grids_with_complete_paths)
 
 
 def cli():

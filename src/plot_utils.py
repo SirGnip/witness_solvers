@@ -1,12 +1,14 @@
 # Shared utilities that leverage matplotlib's plt lib
 from matplotlib import pyplot as plt
+import cfg
 
 
 def show(img):
     '''Nice interactive image viewer with matplotlib plt module'''
-    print(img)
-    plt.imshow(img)
-    plt.show()
+    if cfg.SHOW_DEBUG_IMG:
+        print(img)
+        plt.imshow(img)
+        plt.show()
 
 
 def run_anim(img_generator, delay=1.0):

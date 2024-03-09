@@ -250,7 +250,7 @@ class Grid:
                         return False
         return True
 
-    def is_solved_region_puzzle(self) -> bool:
+    def is_solved_region_puzzle(self, edges_to_del) -> bool:
         '''Return True if the given Grid, cells and path are a solved Region puzzle'''
         for region in self.get_regions_wrapper().regions:
             # get cell values for each point in region
@@ -260,6 +260,17 @@ class Grid:
             # if any region has > 1 unique cell color, fail solution
             if len(colors) > 1:
                 return False
+
+        # Test if any of the path segments have been removed via `edges_to_del`.
+        # This is possible because in general we are creating a grids with fully traversed paths (often loaded from
+        # disk) that do NOT take removed edges into the enumeration. This is a performance optimization (cache the
+        # exhaustive enumeration of all paths to disk and then load it. Then, I get the list of paths that meet the
+        # region requirements (code above) and then reject any potential solution paths that include an edge that
+        # is rejected via `edges_to_del`.
+        for points_on_path in itertools.pairwise(self.path):
+            if frozenset(points_on_path) in edges_to_del:
+                return False
+
         return True
 
     def __str__(self) -> str:
@@ -395,6 +406,9 @@ def demo_solve_tri_puzzles():
     )))
 
     grid = Grid(5, 5)
+    # Note: If you create a cached paths pickle file with codepaths in puzzle.py, you can NOT load it in runner.py
+    # because the module paths stored in the .pickle file are not visible to runner.py. But, if the pickle file is
+    # generated in a runner.py codepath, code in puzzle.py will be able to load it.
     grids_with_paths, grids_with_complete_paths = grid.calc_paths('grid_5x5.cache.pickle')
 
     for cells in test_cells:
@@ -438,19 +452,8 @@ def demo_initial_region_solve():
     ans = []
     for g in grids_with_complete_paths:
         g.set_cells(cells)
-        if g.is_solved_region_puzzle():
-
-            # Test if any of the path segments do not exist in the grid
-            # This is possible because in general we are loading the fully enumerated list of Paths from disk
-            # and are not re-traversing the grid each time. It is a performance optimization to load the generic
-            # but exhaustive path traversal and simply skip any valid paths that use edges that don't exist in the grid.
-            keep = True
-            for points_on_path in itertools.pairwise(g.path):
-                if frozenset(points_on_path) in edges_to_del:
-                    keep = False
-                    break
-            if keep:
-                ans.append(g)
+        if g.is_solved_region_puzzle(edges_to_del):
+            ans.append(g)
 
     print('answers', '-' * 20)
     for g in ans:
@@ -476,3 +479,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
