@@ -26,31 +26,35 @@ def find_bounding_box(img: Image) -> img_proc.Rect:
 
     drw = ImageDraw.Draw(img)
 
-    for x in cfg.PANEL_BOUNDING_BOX_WHISKER_START_X:
+    for x in cfg.Puzzle.PANEL_BOUNDING_BOX_WHISKER_START_X:
         pixels = [img.getpixel((x, y)) for y in range(0, 480)]
+        # Search from the top pointing down
         for y in range(len(pixels)):
-            if pixels[y:y+4] == [cfg.BORDER_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX]:
-                img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
+            if pixels[y:y+4] == cfg.Puzzle.line_pattern():
+                img_proc.cross(drw, x, y, cfg.Puzzle.DEBUG_COLOR)
                 top_points.append((x, y))
                 break
 
+        # Search from the bottom pointing up
         for y in range(len(pixels), -1, -1):
-            if pixels[y:y+4] == [cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.BORDER_GREEN_IDX]:
-                img_proc.cross(drw, x, y+3, cfg.DEBUG_COLOR_IDX)
+            if pixels[y:y+4] == list(reversed(cfg.Puzzle.line_pattern())):
+                img_proc.cross(drw, x, y+3, cfg.Puzzle.DEBUG_COLOR)
                 bottom_points.append((x, y+3))
                 break
 
-    for y in cfg.PANEL_BOUNDING_BOX_WHISKER_START_Y:
+    for y in cfg.Puzzle.PANEL_BOUNDING_BOX_WHISKER_START_Y:
         pixels = [img.getpixel((x, y)) for x in range(0, 640)]
+        # Search from the left pointing right
         for x in range(150, len(pixels)):  # 150 is to skip the puzzle to the left
-            if pixels[x:x+4] == [cfg.BORDER_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX]:
-                img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
+            if pixels[x:x+4] == cfg.Puzzle.line_pattern():
+                img_proc.cross(drw, x, y, cfg.Puzzle.DEBUG_COLOR)
                 left_points.append((x, y))
                 break
 
+        # Search from the right pointing left
         for x in range(len(pixels), -1, -1):
-            if pixels[x:x+4] == [cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.LINE_GREEN_IDX, cfg.BORDER_GREEN_IDX]:
-                img_proc.cross(drw, x+3, y, cfg.DEBUG_COLOR_IDX)
+            if pixels[x:x+4] == list(reversed(cfg.Puzzle.line_pattern())):
+                img_proc.cross(drw, x+3, y, cfg.Puzzle.DEBUG_COLOR)
                 right_points.append((x+3, y))
                 break
 
@@ -83,13 +87,9 @@ def find_cell_colors(img: Image) -> CellGrid:
             x = x_chunk * h_slice
             y = y_chunk * v_slice
             p = img.getpixel((x, y))
-            char = ' '
-            if p == cfg.CELL_BLACK_IDX:
-                char = 'b'
-            elif p == cfg.CELL_WHITE_IDX:
-                char = 'w'
+            char = cfg.Puzzle.pixel_to_color_char(p)
             row.append(char)
-            img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
+            img_proc.cross(drw, x, y, cfg.Puzzle.DEBUG_COLOR)
         cells.append(tuple(row))
     for r in cells:
         print(r)
@@ -113,8 +113,8 @@ def find_broken_edges(img: Image) -> set[PointPair]:
         x = min(x, img.width - 1)  # clamp to image dimension
         y = min(y, img.height - 1)  # clamp to image dimension
         p = img.getpixel((x, y))
-        img_proc.cross(drw, x, y, cfg.DEBUG_COLOR_IDX)
-        if p != cfg.LINE_GREEN_IDX:
+        img_proc.cross(drw, x, y, cfg.Puzzle.DEBUG_COLOR)
+        if p != cfg.Puzzle.LINE_GREEN:
             edges_to_del.add(edge)
 
     for e in edges_to_del:

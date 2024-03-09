@@ -30,14 +30,15 @@ def preprocess_image(img: Image) -> Image:
     '''Reduce the image down to a known list of colors to make parsing easier'''
     print('Doing pre-processing on the image')
     palimage = Image.new('P', (16, 16))
-    palimage.putpalette(cfg.PALETTE_COLORS)
-    new_img = img.quantize(colors=len(cfg.PALETTE_COLORS) / 3, palette=palimage, dither=Image.Dither.NONE)
+    palimage.putpalette(cfg.Puzzle.palette)
+    new_img = img.quantize(colors=len(cfg.Puzzle.palette) / 3, palette=palimage, dither=Image.Dither.NONE)
     new_img = new_img.filter(ImageFilter.ModeFilter(5))
     return new_img
 
 
 def process_image(img, grid, grids_with_complete_paths):
     assert img.size == (640, 480)
+    plot_utils.show(img)
     img = preprocess_image(img)
     plot_utils.show(img)
 
