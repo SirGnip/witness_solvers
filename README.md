@@ -17,3 +17,8 @@ I place some very tight constraints on it to make it easier to write.
 - The Witness application is run at a resolution of 640x480.
 - The Witness applications is run in windowed mode, not fullscreen.
 - All desktop screen scaling is removed. 
+
+
+# Warts
+- The `cfg.py` module started as static constants. But it evolved into storing the puzzle-specific logic. Mutating global
+  state, etc. Yuck.
