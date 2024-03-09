@@ -6,6 +6,7 @@ import cfg
 import img_proc
 import img_parsing
 import plot_utils
+import puzzle
 
 
 def wait_for_keypress(keys: list[str]) -> str:
@@ -37,7 +38,13 @@ def process_image(img):
 
     # parse image
     print('Parse image to get info from it and update the grid with the found cells and edges')
-    cells, broken_links = img_parsing.get_puzzle_details(img)
+    cells, broken_edges = img_parsing.get_puzzle_details(img)
+
+    # print out grid for confirmation that processing worked
+    grid = puzzle.Grid(5, 5)
+    grid.set_cells(cells)
+    grid.delete_edges_from_path(broken_edges)
+    print(grid)
 
     # solve puzzle
     print('Filter results down to the solution using puzzle constraints')
@@ -54,7 +61,7 @@ def main(args):
         img = img_proc.get_game_image(args)
         process_image(img)
     else:
-        # realtime - grab screenshot from game
+        # realtime - grab screenshot from running game
         while True:
             key = wait_for_keypress(['x'])
             print(f'Keypress: {key}')
