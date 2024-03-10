@@ -4,28 +4,8 @@ import itertools
 from pathlib import Path
 import pickle
 import cfg
+import utils
 from typ import Point, PointPair, GridEdges, PointPath, Region, Regions
-
-
-def lerp(a: float, b: float, u: float) -> float:
-    '''Linear interpolation'''
-    return a + ((b - a) * u)
-
-
-def pt_add(a: Point, b: Point) -> Point:
-    return a[0] + b[0], a[1] + b[1]
-
-
-def pt_in_bounds(p: Point, x_bound: int, y_bound: int) -> bool:
-    '''Is given point in bounds. x_bound and y_bound are EXCLUSIVE'''
-    x, y = p
-    return 0 <= x < x_bound and 0 <= y < y_bound
-
-
-def pt_lerp(p1, p2, u):
-    x1, y1 = p1
-    x2, y2 = p2
-    return lerp(x1, x2, u), lerp(y1, y2, u)
 
 
 class RegionsWrapper:
@@ -77,7 +57,7 @@ class Grid:
             points.add(b)
 
         for d in (cfg.RIGHT, cfg.DOWN, cfg.LEFT, cfg.UP):
-            hop = pt_add(pt, d)
+            hop = utils.pt_add(pt, d)
             if self._contains(hop):
                 pair = frozenset((pt, hop))
                 if pair in self.edges and self.edges[pair] == False and hop not in points:
@@ -177,20 +157,20 @@ class Grid:
         points = set()
         # If and edge exists and the edge's state is False, the "grow" is valid
         if self.edges.get(self.calc_edge(point, cfg.RIGHT), 'no edge') == False:
-            p = pt_add(point, cfg.RIGHT)
-            if pt_in_bounds(p, self.width - 1, self.height - 1):
+            p = utils.pt_add(point, cfg.RIGHT)
+            if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         if self.edges.get(self.calc_edge(point, cfg.UP), 'no edge') == False:
-            p = pt_add(point, cfg.UP)
-            if pt_in_bounds(p, self.width - 1, self.height - 1):
+            p = utils.pt_add(point, cfg.UP)
+            if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         if self.edges.get(self.calc_edge(point, cfg.LEFT), 'no edge') == False:
-            p = pt_add(point, cfg.LEFT)
-            if pt_in_bounds(p, self.width - 1, self.height - 1):
+            p = utils.pt_add(point, cfg.LEFT)
+            if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         if self.edges.get(self.calc_edge(point, cfg.DOWN), 'no edge') == False:
-            p = pt_add(point, cfg.DOWN)
-            if pt_in_bounds(p, self.width - 1, self.height - 1):
+            p = utils.pt_add(point, cfg.DOWN)
+            if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         return points
 
@@ -299,13 +279,13 @@ class Grid:
                         raise RuntimeError('Unable to determine character for point pair: {pair}')
 
                 # right
-                right = pt_add(pt, cfg.RIGHT)
+                right = utils.pt_add(pt, cfg.RIGHT)
                 if self._contains(right):
                     pair: PointPair = frozenset((pt, right))
                     txt.write(x * 2 + 1, y * 2, get_char(pair, cfg.EMPTY, cfg.HORIZ_ON, cfg.HORIZ_OFF))
 
                 # down
-                down = pt_add(pt, cfg.DOWN)
+                down = utils.pt_add(pt, cfg.DOWN)
                 if self._contains(down):
                     pair: PointPair = frozenset((pt, down))
                     txt.write(x * 2, y * 2 + 1, get_char(pair, cfg.EMPTY, cfg.VERT_ON, cfg.VERT_OFF))

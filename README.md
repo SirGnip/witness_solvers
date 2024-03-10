@@ -20,5 +20,11 @@ I place some very tight constraints on it to make it easier to write.
 
 
 # Warts
+- In general, this code evolved and was not designed.  It is messy.
+- Puzzles that have breaks in the grid lines aren't handled how you would expect. You would expect to analyse
+  the image, create a full grid, remove the edges of the grid that are "broken", set the cells' features (colored
+  rectangles, triangles), then run the solver to generate valid paths.  However, because of how the code evolved... it
+  was easier to generate the full grid, generate all paths for that grid, come up with all solutions and THEN remove
+  those solutions that happened to include edges that were broken.
 - The `cfg.py` module started as static constants. But it evolved into storing the puzzle-specific logic. Mutating global
   state, etc. Yuck.

@@ -1,9 +1,11 @@
 # Basic utils for interacting with an image
 import datetime
 import ctypes
+from typing import Self
 from ctypes import wintypes
 from PIL import Image, ImageGrab, ImageColor
 import cfg
+import utils
 
 
 class Clr:
@@ -34,6 +36,10 @@ class Rect:
         height = self.y2 - self.y1
         return f"{self.x1},{self.x2}-{self.y1},{self.y2} {width}x{height}"
 
+    @staticmethod
+    def from_img(img: Image):
+        return Rect(0, 0, img.width, img.height)
+
     def as_tuple(self):
         '''This is the ordering expected by Pillow'''
         return self.x1, self.y1, self.x2, self.y2
@@ -44,6 +50,16 @@ class Rect:
             self.y1-delta,
             self.x2+delta,
             self.y2+delta)
+
+    def divide(self, divs: int, cell_x: int, cell_y: int) -> Self:
+        fraction = 1/divs
+        r = Rect(
+            utils.lerp(self.x1, self.x2, cell_x * fraction),
+            utils.lerp(self.y1, self.y2, cell_y * fraction),
+            utils.lerp(self.x1, self.x2, (cell_x + 1) * fraction),
+            utils.lerp(self.y1, self.y2, (cell_y + 1) * fraction),
+        )
+        return r
 
 
 def get_win_location(desc) -> Rect :

@@ -57,7 +57,11 @@ def process_image(img, grid, grids_with_complete_paths):
     answers = []
     for idx, grid_with_path in enumerate(grids_with_complete_paths):
         grid_with_path.set_cells(cells)
-        if grid_with_path.is_solved_region_puzzle(broken_edges):
+        if isinstance(cfg.Puzzle, cfg.Triangle):
+            is_solved = grid_with_path.is_solved_tri_puzzle()
+        else:
+            is_solved = grid_with_path.is_solved_region_puzzle(broken_edges)
+        if is_solved:
             print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
             print(grid_with_path)
             answers.append(grid_with_path)
@@ -79,11 +83,11 @@ def main(args):
     else:
         # realtime - grab screenshot from running game
         while True:
-            key = wait_for_keypress(['z', 'x'])
+            key = wait_for_keypress(['1', '2', '3'])
             print(f'Keypress: {key}')
 
             try:
-                key_map = {'z': 'Starter2Region', 'x': 'TripletRegion'}
+                key_map = {'1': 'Starter2Region', '2': 'TripletRegion', '3': 'Triangle'}
                 cfg.config_factory(key_map[key])
 
                 img = img_proc.get_game_image(args)

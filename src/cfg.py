@@ -19,6 +19,7 @@ WINDOW_DESC = "The Witness"
 PUZZLE_TYPES = (
     'Starter2Region',
     'TripletRegion',
+    'Triangle',
 )
 
 Puzzle = None
@@ -31,6 +32,8 @@ def config_factory(puzzle_type):
         Puzzle = Region2ColorStarter()
     elif puzzle_type == 'TripletRegion':
         Puzzle = RegionColorTriplet()
+    elif puzzle_type == 'Triangle':
+        Puzzle = Triangle()
     else:
         raise RuntimeError(f'Unknown puzzle_type: {puzzle_type}')
 
@@ -40,7 +43,7 @@ UP: Point = (0, -1)
 LEFT: Point = (-1, 0)
 DOWN: Point = (0, 1)
 
-# General color catalog
+# Colors of the region puzzles
 BLACK_RGB = (0, 0, 0)
 CELL_BLACK_RGB = (1, 41, 31)
 CELL_WHITE_RGB = (215, 218, 216)
@@ -51,6 +54,11 @@ LINE_GREEN_RGB = (27, 47, 56)
 INNER_CELL_GREEN_RGB = (0, 164, 130)
 BACKGROUND_BROWN_RGB = (37, 21, 3)
 
+# Colors for the Triangle puzzles
+TRIANGLE_BACKGROUND_RGB = (25, 20, 5)
+TRIANGLE_LINE_RGB = (127, 107, 42)
+TRIANGLE_ICON_RGB = (250, 187, 10)
+# TRIANGLE_BROWN_RGB = (34, 17, 2)  # color of the surrounding wall
 
 class PuzzleConfig:
     PANEL_BOUNDING_BOX_WHISKER_START_X = (260, 380)
@@ -125,3 +133,26 @@ class RegionColorTriplet(PuzzleConfig):
         elif pixel_idx == self.CELL_ORANGE:
             return 'o'
         return ' '
+
+
+class Triangle(PuzzleConfig):
+    '''Handles the triangle puzzle'''
+    palette = (
+        # BLACK_RGB +
+        CELL_WHITE_RGB +
+        TRIANGLE_BACKGROUND_RGB +
+        TRIANGLE_LINE_RGB +
+        TRIANGLE_ICON_RGB
+        # TRIANGLE_BROWN_RGB
+    )
+    # BLACK = 0
+    CELL_WHITE = 0
+    TRIANGLE_BACKGROUND = 1
+    TRIANGLE_LINE = 2
+    TRIANGLE_ICON = 3
+    # TRIANGLE_BROWN = 4
+
+    DEBUG_COLOR = CELL_WHITE
+
+    def line_pattern(self):
+        return [self.TRIANGLE_BACKGROUND, self.TRIANGLE_LINE, self.TRIANGLE_LINE, self.TRIANGLE_LINE]

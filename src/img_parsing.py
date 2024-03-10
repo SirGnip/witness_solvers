@@ -1,7 +1,10 @@
 # Utilities to read an image and pull details from it (cell colors, broken links, etc)
+import itertools
+
 from PIL import Image, ImageDraw
 import cfg
 from typ import PointPair, CellGrid
+import utils
 import plot_utils
 import img_proc
 import puzzle
@@ -12,8 +15,12 @@ def get_puzzle_details(img: Image) -> tuple[CellGrid, set[PointPair]]:
     bounding_box = find_bounding_box(img)
     puzzle_img = img.crop(bounding_box.as_tuple())
     plot_utils.show(puzzle_img)
-    cells = find_cell_colors(puzzle_img)
-    broken_links = find_broken_edges(puzzle_img)
+    if isinstance(cfg.Puzzle, cfg.Triangle):
+        cells = find_triangle_counts(puzzle_img)
+        broken_links = set()
+    else:
+        cells = find_cell_colors(puzzle_img)
+        broken_links = find_broken_edges(puzzle_img)
     return cells, broken_links
 
 
@@ -97,6 +104,38 @@ def find_cell_colors(img: Image) -> CellGrid:
     return tuple(cells)
 
 
+def find_triangle_counts(img: Image) -> CellGrid:
+    print('Counting number of triangles')
+    drw = ImageDraw.Draw(img)
+
+    cells = []
+    full_rect = img_proc.Rect.from_img(img)
+    for cell_y in range(4):
+        row = []
+        for cell_x in range(4):
+            # subdivide grid into per-cell region
+            sub_rect = full_rect.divide(4, cell_x, cell_y)
+
+            # determine the y of the triangles (50%)
+            triangle_y = utils.lerp(sub_rect.y1, sub_rect.y2, 0.5)
+            img_proc.cross(drw, sub_rect.x1, triangle_y, cfg.Puzzle.DEBUG_COLOR)
+
+            # get the pixels in this sub_rect
+            pixels = [img.getpixel((x, triangle_y)) for x in range(int(sub_rect.x1), int(sub_rect.x2))]
+
+            # count the number of "starts" of the TRIANGLE_ICON color when scanning left-to-right
+            tri_clr_idx = cfg.Puzzle.TRIANGLE_ICON
+            tri_count = sum([1 for a, b in itertools.pairwise(pixels) if a != tri_clr_idx and b == tri_clr_idx])
+
+            # encode triangle count as a character
+            char = str(tri_count) if tri_count > 0 else ' '
+            row.append(char)
+
+        cells.append(tuple(row))
+    plot_utils.show(img)
+    return tuple(cells)
+
+
 def find_broken_edges(img: Image) -> set[PointPair]:
     print('Parsing broken edges from puzzle image')
 
@@ -108,7 +147,7 @@ def find_broken_edges(img: Image) -> set[PointPair]:
 
     for edge in puzzle.Grid.enumerate_all_edges(5, 5):
         p1, p2 = edge
-        mid_point_idx = puzzle.pt_lerp(p1, p2, 0.5)
+        mid_point_idx = utils.pt_lerp(p1, p2, 0.5)
         x, y = mid_point_idx[0] * h_step, mid_point_idx[1] * v_step
         x = min(x, img.width - 1)  # clamp to image dimension
         y = min(y, img.height - 1)  # clamp to image dimension

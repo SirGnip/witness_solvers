@@ -20,6 +20,8 @@ FILE_AND_TYPE = (
     # ('TripletRegion', 'region3_1.jpg'),
     # ('TripletRegion', 'region3_2.jpg'),
     ('TripletRegion', 'region3_3.jpg'),
+    # ('Triangle', 'triangle1.jpg'),
+    ('Triangle', 'triangle2.jpg'),
 )
 
 def main():
