@@ -65,6 +65,10 @@ def process_image(img, grid, grids_with_complete_paths):
 
 
 def main(args):
+    if args.imgpath is not None:
+        if args.puzzle_type is None:
+            raise Exception('Must provide --puzzle-type if you provide --imgpath')
+
     grid, grids_with_paths, grids_with_complete_paths = load_initial_grid_cache(5, 5)
 
     if args.imgpath:
@@ -78,12 +82,16 @@ def main(args):
             key = wait_for_keypress(['z', 'x'])
             print(f'Keypress: {key}')
 
-            key_map = {'z': 'Starter2Region', 'x': 'TripletRegion'}
-            cfg.config_factory(key_map[key])
+            try:
+                key_map = {'z': 'Starter2Region', 'x': 'TripletRegion'}
+                cfg.config_factory(key_map[key])
 
-            img = img_proc.get_game_image(args)
-            print(img)
-            process_image(img, grid, grids_with_complete_paths)
+                img = img_proc.get_game_image(args)
+                print(img)
+                process_image(img, grid, grids_with_complete_paths)
+            except Exception as exc:
+                print("Error:", exc)
+
 
 
 def cli():
