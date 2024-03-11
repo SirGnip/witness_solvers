@@ -65,6 +65,8 @@ def process_image(img, grid, grids_with_complete_paths):
             print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
             print(grid_with_path)
             answers.append(grid_with_path)
+            if not cfg.SHOW_DEBUG_IMG:
+                break  # only show first answer for speed
     print(f'Found {len(answers)} answers')
 
 
@@ -95,7 +97,6 @@ def main(args):
                 process_image(img, grid, grids_with_complete_paths)
             except Exception as exc:
                 print("Error:", exc)
-
 
 
 def cli():

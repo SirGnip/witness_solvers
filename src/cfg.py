@@ -1,7 +1,8 @@
 from typ import Point
 
+# For running the realtime app, these settings should both be False
 DEBUG = False  # Must be True for tests to pass
-SHOW_DEBUG_IMG = True
+SHOW_DEBUG_IMG = False
 
 if DEBUG:
     # good for debugging by showing all edges and intersections
