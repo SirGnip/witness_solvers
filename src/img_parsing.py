@@ -34,7 +34,7 @@ def find_bounding_box(img: Image) -> img_proc.Rect:
     drw = ImageDraw.Draw(img)
 
     for x in cfg.Puzzle.PANEL_BOUNDING_BOX_WHISKER_START_X:
-        pixels = [img.getpixel((x, y)) for y in range(0, 480)]
+        pixels = [img.getpixel((x, y)) for y in range(0, cfg.SCREEN_HEIGHT)]
         # Search from the top pointing down
         for y in range(len(pixels)):
             if pixels[y:y+4] == cfg.Puzzle.line_pattern():
@@ -50,9 +50,9 @@ def find_bounding_box(img: Image) -> img_proc.Rect:
                 break
 
     for y in cfg.Puzzle.PANEL_BOUNDING_BOX_WHISKER_START_Y:
-        pixels = [img.getpixel((x, y)) for x in range(0, 640)]
+        pixels = [img.getpixel((x, y)) for x in range(0, cfg.SCREEN_WIDTH)]
         # Search from the left pointing right
-        for x in range(150, len(pixels)):  # 150 is to skip the puzzle to the left
+        for x in range(int(cfg.SCREEN_WIDTH*0.23), len(pixels)):  # 23% is to skip the puzzle to the left for the 1st puzzle
             if pixels[x:x+4] == cfg.Puzzle.line_pattern():
                 img_proc.cross(drw, x, y, cfg.Puzzle.DEBUG_COLOR)
                 left_points.append((x, y))

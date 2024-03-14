@@ -7,13 +7,13 @@ import puzzle
 import img_proc
 import img_parsing
 import plot_utils
-
+import traceback
 
 
 def wait_for_keypress(keys: list[str]) -> str:
     print('Waiting for keypress on', keys)
     while True:
-        time.sleep(0.1)
+        time.sleep(0.05)
         for key in keys:
             if keyboard.is_pressed(key):
                 return key
@@ -24,7 +24,6 @@ def load_initial_grid_cache(width, height):
     grid = puzzle.Grid(width, height)
     grids_with_paths, grids_with_complete_paths = grid.calc_paths('grid_5x5.cache.pickle')
     return grid, grids_with_paths, grids_with_complete_paths
-
 
 def preprocess_image(img: Image) -> Image:
     '''Reduce the image down to a known list of colors to make parsing easier'''
@@ -37,7 +36,7 @@ def preprocess_image(img: Image) -> Image:
 
 
 def process_image(img, grid, grids_with_complete_paths):
-    assert img.size == (640, 480)
+    assert img.size == (cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
     plot_utils.show(img)
 
     img = preprocess_image(img)
@@ -96,8 +95,8 @@ def main(args):
                 print(img)
                 process_image(img, grid, grids_with_complete_paths)
             except Exception as exc:
-                print("Error:", exc)
-
+                print(''.join(traceback.format_exception(exc)))
+                print()
 
 def cli():
     parser = argparse.ArgumentParser(prog='Solvers for The Witness')
