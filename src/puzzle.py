@@ -156,20 +156,25 @@ class Grid:
         # But in this current implementation, a region is blocked by a missing edge.
         points = set()
         # If and edge exists and the edge's state is False, the "grow" is valid
-        if self.edges.get(self.calc_edge(point, cfg.RIGHT), 'no edge') == False:
-            p = utils.pt_add(point, cfg.RIGHT)
+
+        if not self.edges.get(self.calc_edge(point, cfg.RIGHT), 'no edge'):
+            # p = utils.pt_add(point, cfg.RIGHT)  # removed for potential optimization
+            p = point[0] + cfg.RIGHT[0], point[1] + cfg.RIGHT[1]
             if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, cfg.UP), 'no edge') == False:
-            p = utils.pt_add(point, cfg.UP)
+        if not self.edges.get(self.calc_edge(point, cfg.UP), 'no edge'):
+            # p = utils.pt_add(point, cfg.UP)
+            p = point[0] + cfg.UP[0], point[1] + cfg.UP[1]
             if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, cfg.LEFT), 'no edge') == False:
-            p = utils.pt_add(point, cfg.LEFT)
+        if not self.edges.get(self.calc_edge(point, cfg.LEFT), 'no edge'):
+            # p = utils.pt_add(point, cfg.LEFT)
+            p = point[0] + cfg.LEFT[0], point[1] + cfg.LEFT[1]
             if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
-        if self.edges.get(self.calc_edge(point, cfg.DOWN), 'no edge') == False:
-            p = utils.pt_add(point, cfg.DOWN)
+        if not self.edges.get(self.calc_edge(point, cfg.DOWN), 'no edge'):
+            # p = utils.pt_add(point, cfg.DOWN)
+            p = point[0] + cfg.DOWN[0], point[1] + cfg.DOWN[1]
             if utils.pt_in_bounds(p, self.width - 1, self.height - 1):
                 points.add(p)
         return points
@@ -178,14 +183,18 @@ class Grid:
         '''Given a Point (that identifies a cell), return the Edge that lies in the direction given
         Note: It is overloading terminology a bit, but Point here is the x,y of a cell while the PointPair contains x,y
         values that represent points on the grid lines. The x,y values represent two slightly different concepts here.'''
+        # This function is called 1.5 million times when solving a puzzle. Keep it tight.
         x, y = point
-        direction_map = {
-            cfg.RIGHT: frozenset(((x+1, y+1), (x+1, y))),
-            cfg.DOWN: frozenset(((x, y+1), (x+1, y+1))),
-            cfg.LEFT: frozenset(((x, y), (x, y+1))),
-            cfg.UP: frozenset(((x+1, y), (x, y))),
-        }
-        return direction_map[direction]
+        if direction == cfg.RIGHT:
+            return frozenset(((x+1, y+1), (x+1, y)))
+        elif direction == cfg.DOWN:
+            return frozenset(((x, y+1), (x+1, y+1)))
+        elif direction == cfg.LEFT:
+            return frozenset(((x, y), (x, y + 1)))
+        elif direction == cfg.UP:
+            return frozenset(((x+1, y), (x, y)))
+        else:
+            raise RuntimeError('Unexpected direction: {direction}')
 
     def find_all_paths(self, cur_point: Point) -> list['Grid']:
         '''Given a grid, return a list of grids that contain paths that start/end at the start/end'''

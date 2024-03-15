@@ -1,5 +1,6 @@
 import time
 import argparse
+import traceback
 from PIL import Image, ImageFilter
 import keyboard
 import cfg
@@ -7,7 +8,7 @@ import puzzle
 import img_proc
 import img_parsing
 import plot_utils
-import traceback
+from utils import timer
 
 
 def wait_for_keypress(keys: list[str]) -> str:
@@ -36,36 +37,48 @@ def preprocess_image(img: Image) -> Image:
 
 
 def process_image(img, grid, grids_with_complete_paths):
-    assert img.size == (cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
-    plot_utils.show(img)
+    with timer('3 preproc'):
+        assert img.size == (cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
+        plot_utils.show(img)
 
-    img = preprocess_image(img)
-    plot_utils.show(img)
+        img = preprocess_image(img)
+        plot_utils.show(img)
 
     # parse image
-    print('Parse image to get info from it and update the grid with the found cells and edges')
-    cells, broken_edges = img_parsing.get_puzzle_details(img)
+    with timer('3 details'):
+        print('Parse image to get info from it and update the grid with the found cells and edges')
+        cells, broken_edges = img_parsing.get_puzzle_details(img)
 
     # print out grid for confirmation that processing worked
-    grid.set_cells(cells)
-    grid.delete_edges_from_path(broken_edges)
-    print(grid)
+    with timer('3 set cells'):
+        grid.set_cells(cells)
+    with timer('3 del edges'):
+        print('Grids edges:')
+        for e in grid.edges:
+            print(e)
+        print('broken edges that will be deleted:')
+        for e in broken_edges:
+            print(e)
+        grid.delete_edges_from_path(broken_edges)
+        print(grid)
 
     # solve puzzle
-    print(f'Given {len(grids_with_complete_paths)} full paths, filter results down to the solutions that match the constraints.')
-    answers = []
-    for idx, grid_with_path in enumerate(grids_with_complete_paths):
-        grid_with_path.set_cells(cells)
-        if isinstance(cfg.Puzzle, cfg.Triangle):
-            is_solved = grid_with_path.is_solved_tri_puzzle()
-        else:
-            is_solved = grid_with_path.is_solved_region_puzzle(broken_edges)
-        if is_solved:
-            print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
-            print(grid_with_path)
-            answers.append(grid_with_path)
-            if not cfg.SHOW_DEBUG_IMG:
-                break  # only show first answer for speed
+    with timer('3 solve'):
+        print(f'Given {len(grids_with_complete_paths)} full paths, filter results down to the solutions that match the constraints.')
+        answers = []
+        is_tri_puzzle = isinstance(cfg.Puzzle, cfg.Triangle)
+        for idx, grid_with_path in enumerate(grids_with_complete_paths):
+            grid_with_path.set_cells(cells)
+            if is_tri_puzzle:
+                is_solved = grid_with_path.is_solved_tri_puzzle()
+            else:
+                is_solved = grid_with_path.is_solved_region_puzzle(broken_edges)
+            if is_solved:
+                print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
+                print(grid_with_path)
+                answers.append(grid_with_path)
+                if not cfg.SHOW_DEBUG_IMG:
+                    break  # only show first answer for speed
     print(f'Found {len(answers)} answers')
 
 
@@ -74,13 +87,16 @@ def main(args):
         if args.puzzle_type is None:
             raise Exception('Must provide --puzzle-type if you provide --imgpath')
 
-    grid, grids_with_paths, grids_with_complete_paths = load_initial_grid_cache(5, 5)
+    with timer('Initial load') as t:
+        grid, grids_with_paths, grids_with_complete_paths = load_initial_grid_cache(5, 5)
 
     if args.imgpath:
         cfg.config_factory(args.puzzle_type)
         # use specified image file for one iteration
-        img = img_proc.get_game_image(args)
-        process_image(img, grid, grids_with_complete_paths)
+        with timer('game img'):
+            img = img_proc.get_game_image(args)
+        with timer('proc img'):
+            process_image(img, grid, grids_with_complete_paths)
     else:
         # realtime - grab screenshot from running game
         while True:
@@ -88,15 +104,19 @@ def main(args):
             print(f'Keypress: {key}')
 
             try:
-                key_map = {'1': 'Starter2Region', '2': 'TripletRegion', '3': 'Triangle'}
-                cfg.config_factory(key_map[key])
+                with timer('1 Total'):
+                    key_map = {'1': 'Starter2Region', '2': 'TripletRegion', '3': 'Triangle'}
+                    cfg.config_factory(key_map[key])
 
-                img = img_proc.get_game_image(args)
-                print(img)
-                process_image(img, grid, grids_with_complete_paths)
+                    with timer('2 get img'):
+                        img = img_proc.get_game_image(args)
+                    print(img)
+                    with timer('2 proc img'):
+                        process_image(img, grid, grids_with_complete_paths)
             except Exception as exc:
                 print(''.join(traceback.format_exception(exc)))
                 print()
+                time.sleep(0.3)  # delay a bit otherwise the keypress will be detected multiple times
 
 def cli():
     parser = argparse.ArgumentParser(prog='Solvers for The Witness')
@@ -108,4 +128,6 @@ def cli():
 
 
 if __name__ == '__main__':
-    cli()
+    with timer('Total'):
+        cli()
+

@@ -1,3 +1,6 @@
+import time
+from contextlib import contextmanager
+
 from typ import Point, PointPair, GridEdges, PointPath, Region, Regions
 
 def lerp(a: float, b: float, u: float) -> float:
@@ -20,3 +23,11 @@ def pt_lerp(p1, p2, u):
     x2, y2 = p2
     return lerp(x1, x2, u), lerp(y1, y2, u)
 
+
+@contextmanager
+def timer(msg:str):
+    start = time.time()
+    yield None
+    end = time.time()
+    dur = end - start
+    print(f'Elapsed: {msg} {dur:.3f}')

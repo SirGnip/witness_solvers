@@ -156,6 +156,7 @@ def find_broken_edges(img: Image) -> set[PointPair]:
         if p != cfg.Puzzle.LINE_GREEN:
             edges_to_del.add(edge)
 
+    print('Broken edges that will be deleted')
     for e in edges_to_del:
         print(e)
 
