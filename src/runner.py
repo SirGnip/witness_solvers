@@ -64,22 +64,27 @@ def process_image(img, grid, grids_with_complete_paths):
 
     # solve puzzle
     with timer('3 solve'):
-        print(f'Given {len(grids_with_complete_paths)} full paths, filter results down to the solutions that match the constraints.')
-        answers = []
-        is_tri_puzzle = isinstance(cfg.Puzzle, cfg.Triangle)
-        for idx, grid_with_path in enumerate(grids_with_complete_paths):
-            grid_with_path.set_cells(cells)
-            if is_tri_puzzle:
-                is_solved = grid_with_path.is_solved_tri_puzzle()
-            else:
-                is_solved = grid_with_path.is_solved_region_puzzle(broken_edges)
-            if is_solved:
-                print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
-                print(grid_with_path)
-                answers.append(grid_with_path)
-                if not cfg.SHOW_DEBUG_IMG:
-                    break  # only show first answer for speed
+        find_solutions(grids_with_complete_paths, broken_edges, cells)
+
+
+def find_solutions(grids_with_complete_paths, broken_edges, cells):
+    print(f'Given {len(grids_with_complete_paths)} full paths, filter results down to the solutions that match the constraints.')
+    answers = []
+    is_tri_puzzle = isinstance(cfg.Puzzle, cfg.Triangle)
+    for idx, grid_with_path in enumerate(grids_with_complete_paths):
+        grid_with_path.set_cells(cells)
+        if is_tri_puzzle:
+            is_solved = grid_with_path.is_solved_tri_puzzle()
+        else:
+            is_solved = grid_with_path.is_solved_region_puzzle(broken_edges)
+        if is_solved:
+            print(f'========== Puzzle #{idx} of {len(grids_with_complete_paths)} is a solution')
+            print(grid_with_path)
+            answers.append(grid_with_path)
+            if not cfg.SHOW_DEBUG_IMG:
+                break  # only show first answer for speed
     print(f'Found {len(answers)} answers')
+    return answers
 
 
 def main(args):
