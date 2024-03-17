@@ -1,5 +1,6 @@
 import time
 import argparse
+import copy
 import traceback
 from PIL import Image, ImageFilter
 import keyboard
@@ -53,7 +54,7 @@ def process_image(img, grid, grids_with_complete_paths):
     with timer('3 set cells'):
         grid.set_cells(cells)
     with timer('3 del edges'):
-        print('Grids edges:')
+        print('Grids edges:', len(grid.edges))
         for e in grid.edges:
             print(e)
         print('broken edges that will be deleted:')
@@ -117,7 +118,8 @@ def main(args):
                         img = img_proc.get_game_image(args)
                     print(img)
                     with timer('2 proc img'):
-                        process_image(img, grid, grids_with_complete_paths)
+                        cur_grid = copy.deepcopy(grid)  # grid is muted inside process_image
+                        process_image(img, cur_grid, grids_with_complete_paths)
             except Exception as exc:
                 print(''.join(traceback.format_exception(exc)))
                 print()
