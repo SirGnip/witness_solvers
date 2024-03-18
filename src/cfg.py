@@ -37,6 +37,8 @@ def config_factory(puzzle_type):
         Puzzle = RegionColorTriplet()
     elif puzzle_type == 'Triangle':
         Puzzle = Triangle()
+    elif puzzle_type == 'NoOp':  # used with --save-screenshot to capture a screenshot interactively
+        Puzzle = None
     else:
         raise RuntimeError(f'Unknown puzzle_type: {puzzle_type}')
 

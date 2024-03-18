@@ -106,17 +106,20 @@ def main(args):
     else:
         # realtime - grab screenshot from running game
         while True:
-            key = wait_for_keypress(['1', '2', '3'])
+            key = wait_for_keypress(['1', '2', '3', '0'])
             print(f'Keypress: {key}')
 
             try:
                 with timer('1 Total'):
-                    key_map = {'1': 'Starter2Region', '2': 'TripletRegion', '3': 'Triangle'}
+                    key_map = {'1': 'Starter2Region', '2': 'TripletRegion', '3': 'Triangle', '0': 'NoOp'}
                     cfg.config_factory(key_map[key])
 
                     with timer('2 get img'):
                         img = img_proc.get_game_image(args)
                     print(img)
+                    if cfg.Puzzle is None:
+                        print('Puzzle type was NoOp, Skipping.')
+                        continue
                     with timer('2 proc img'):
                         cur_grid = copy.deepcopy(grid)  # grid is muted inside process_image
                         process_image(img, cur_grid, grids_with_complete_paths)
