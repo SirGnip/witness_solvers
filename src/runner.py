@@ -118,7 +118,12 @@ def main(args):
                         img = img_proc.get_game_image(args)
                     print(img)
                     if cfg.Puzzle is None:
-                        print('Puzzle type was NoOp, Skipping.')
+                        print('Puzzle type was NoOp, Skipping puzzle solving.')
+                        num_shots = 14
+                        for i in range(1, num_shots + 1):
+                            print(f'#{i}/{num_shots} screenshots...')
+                            img_proc.get_game_image(args)
+                            time.sleep(1.0)  # screenshots are named with per-second timestamps
                         continue
                     with timer('2 proc img'):
                         cur_grid = copy.deepcopy(grid)  # grid is muted inside process_image

@@ -66,10 +66,8 @@ def get_win_location(desc) -> Rect :
     user32 = ctypes.windll.user32
     handle = user32.FindWindowW(None, desc)
     rect = wintypes.RECT()
-    ff = ctypes.windll.user32.GetWindowRect(handle, ctypes.pointer(rect))
-    print(ff)
+    ctypes.windll.user32.GetWindowRect(handle, ctypes.pointer(rect))
     r = Rect(rect.left, rect.top, rect.right, rect.bottom)
-    print(r)
     return r
 
 
