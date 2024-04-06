@@ -20,7 +20,10 @@ def get_puzzle_details(img: Image) -> tuple[CellGrid, set[PointPair]]:
         broken_links = set()
     else:
         cells = find_cell_colors(puzzle_img)
-        broken_links = find_broken_edges(puzzle_img)
+        if isinstance(cfg.Puzzle, cfg.Region2ColorStarter):
+            broken_links = find_broken_edges(puzzle_img)
+        else:
+            broken_links = set()
     return cells, broken_links
 
 
